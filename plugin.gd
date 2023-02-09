@@ -38,6 +38,7 @@ class Pen:
 var _is_in_edit_mode: bool = false
 var _pen: Pen
 var node: WormsTerrain
+var _panel: Control
 
 func _enter_tree():
     _pen = Pen.new()
@@ -45,6 +46,8 @@ func _enter_tree():
     var gui = get_editor_interface().get_base_control()
     var icon = gui.get_theme_icon("KeyEasedSelected", "EditorIcons")
     add_custom_type("WormsTerrain", "Node2D", preload("WormsTerrain.gd"), icon)
+    _panel = Control.new()
+    add_control_to_bottom_panel(_panel,'WormsTerrain')
 
 func _on_selection_changed():
     var selected: Array = get_editor_interface().get_selection().get_selected_nodes()
@@ -89,5 +92,6 @@ func _handles(object) -> bool:
 
 func _exit_tree():    
     remove_custom_type("WormsTerrain")
+    remove_control_from_bottom_panel(_panel)
 
 
