@@ -8,6 +8,7 @@ const MAX_BLOCK_RANGE: int = 10000
 const CELL_SIZE: int = 100
 
 @export_category("WormsTerrain")
+@export var level_data: WTLevelData
 @export_flags_2d_render var occluder_light_mask = 0
 @export_flags_2d_physics var collsion_mask: int = 0
 
