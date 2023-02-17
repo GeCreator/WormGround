@@ -1,35 +1,29 @@
-# Главный объект разрушаемой поверхности
-# Он хранит в себе блоки (_cells) которым
-# передает команды по добавлению/удалению
-# форм из них
-
-class_name WormsTerrain extends Node2D
+@tool
+# The main project object
+class_name WormGround extends Node2D
 const MAX_BLOCK_RANGE: int = 10000
 const CELL_SIZE: int = 100
 
-@export_category("WormsTerrain")
-@export var level_data: WTLevelData
-@export_flags_2d_render var occluder_light_mask = 0
-@export_flags_2d_physics var collsion_mask: int = 0
+@export_category("WormGround")
+## Tools used for draw
+@export var tool_set: WGToolSet
+## level data (do not edit manually!)
+@export var level: WGLevelData
 
 var _cells: Dictionary
-var _canvas_group: DTCanvasGroup
-
-func _ready():
-    _canvas_group = DTCanvasGroup.new(CELL_SIZE, get_canvas_item())
 
 func add(shape: PackedVector2Array, brush: DTBrush):
-    var cells: Array[DTCell] = _get_affected_cells(shape)
+    var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
         cell.add(shape, brush)
 
 func remove(shape: PackedVector2Array):
-    var cells: Array[DTCell] = _get_affected_cells(shape)
+    var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
         cell.remove(shape)
 
-func _get_affected_cells(shape: PackedVector2Array) -> Array[DTCell]:
-    var result: Array[DTCell]
+func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
+    var result: Array[WGCell]
     var aabb := _get_shape_area(shape)
     var from = _cell_coords(aabb.position)
     var to = _cell_coords(aabb.end)
@@ -46,7 +40,7 @@ func _get_shape_area(shape: PackedVector2Array) -> Rect2:
     var min_y: float = INF
     var max_x: float = -INF
     var max_y: float = -INF
-    # определяем границы формы в пространстве
+    # detect shape borders
     for p in shape:
         if p.x<min_x: min_x = p.x
         if p.y<min_y: min_y = p.y
@@ -57,10 +51,10 @@ func _get_shape_area(shape: PackedVector2Array) -> Rect2:
     result.end = Vector2(max_x, max_y)
     return result
     
-func _get_cell(coords: Vector2) -> DTCell:
+func _get_cell(coords: Vector2) -> WGCell:
     var id = _make_cell_id(coords);
     if _cells.has(id): return _cells[id]
-    _cells[id] = DTCell.new(coords, CELL_SIZE, _canvas_group)
+    #_cells[id] = WTCell.new(coords, CELL_SIZE, _canvas_group)
     return  _cells[id]
 
 
@@ -88,6 +82,3 @@ func _get_cutted_polygons(coords: Vector2, shape: PackedVector2Array) -> Array[P
         Vector2(x, y+CELL_SIZE),
     ])
     return Geometry2D.intersect_polygons(shape, cut_polygon)
-
-func _process(delta):
-    _canvas_group.render()
