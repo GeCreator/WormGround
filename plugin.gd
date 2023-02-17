@@ -37,26 +37,30 @@ class Pen:
 
 var _is_in_edit_mode: bool = false
 var _pen: Pen
-var node: WormsTerrain
+var node: WormGround
 var _panel: Control
 
 func _enter_tree():
     _pen = Pen.new()
+    _pen.draw.connect(_on_pen_draw)
+    
+    _panel = preload("./scenes/ToolSetPanel.tscn").instantiate()
+    
     get_editor_interface().get_selection().selection_changed.connect(_on_selection_changed)
     var gui = get_editor_interface().get_base_control()
-    var icon = gui.get_theme_icon("KeyEasedSelected", "EditorIcons")
-    add_custom_type("WormsTerrain", "Node2D", preload("WormsTerrain.gd"), icon)
-    _panel = Control.new()
-    add_control_to_bottom_panel(_panel,'WormsTerrain')
+    var icon = gui.get_theme_icon("Polygon2D", "EditorIcons")
+    add_custom_type("WormGround", "Node2D", preload("classes/WormGround.gd"), icon)
 
 func _on_selection_changed():
     var selected: Array = get_editor_interface().get_selection().get_selected_nodes()
-    if selected.size()==1 and selected[0] is WormsTerrain:
+    if selected.size()==1 and selected[0] is WormGround:
         node = selected[0]
         _is_in_edit_mode = true
+        _activate_panel()
     else:
         node = null
         _is_in_edit_mode = false
+        _diactivate_panel()
 
 func _forward_canvas_draw_over_viewport(overlay: Control):
     if not _is_in_edit_mode: return false
@@ -82,16 +86,39 @@ func _forward_canvas_gui_input(event) -> bool:
         update_overlays()
         return true
     return false
-    
+
 func _get_global_mouse_position(screen_point: Vector2) -> Vector2:
     var vt: Transform2D = node.get_viewport_transform()
     return vt.affine_inverse().get_origin() + screen_point*vt.affine_inverse().get_scale()
 
+func _on_pen_draw(shape: PackedVector2Array):
+    if _is_in_edit_mode:
+        node.level_data._data['polygon'] = shape;
+
 func _handles(object) -> bool:    
     return _is_in_edit_mode
 
-func _exit_tree():    
-    remove_custom_type("WormsTerrain")
+func _exit_tree():
+    remove_custom_type("WormGround")
+    _diactivate_panel()
+    _panel.queue_free()
+
+func _activate_panel():
+    add_control_to_bottom_panel(_panel,'WormGround (ToolSet)')
+    _panel.connect('action', _on_panel_action)
+    make_bottom_panel_item_visible(_panel)
+
+func _diactivate_panel():
+    _panel.disconnect('action', _on_panel_action)
     remove_control_from_bottom_panel(_panel)
 
-
+func _on_panel_action(action: String, value):
+    match(action):
+        'create_surface':
+            var surface = WGSurface.new()
+            if node.tool_set.add_surface(value, surface):
+                get_editor_interface().edit_resource(surface)
+            else:
+                _panel.show_error('Surface "%s" already exists in this toolset' % value)
+        
+        _: print('unknow panel action')
