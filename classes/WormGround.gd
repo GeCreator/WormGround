@@ -5,17 +5,22 @@ const MAX_BLOCK_RANGE: int = 10000
 const CELL_SIZE: int = 100
 
 @export_category("WormGround")
-## Tools used for draw
-@export var tool_set: WGToolSet
-## level data (do not edit manually!)
-@export var level: WGLevelData
+
+@export var tool_set: WGToolSet:
+    set(value):
+        tool_set = value
+        notify_property_list_changed()
+
+var _data: Dictionary
+
 
 var _cells: Dictionary
 
-func add(shape: PackedVector2Array, brush: DTBrush):
+func add(shape: PackedVector2Array):
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
-        cell.add(shape, brush)
+        pass
+        # cell.add(shape, brush)
 
 func remove(shape: PackedVector2Array):
     var cells: Array[WGCell] = _get_affected_cells(shape)
@@ -82,3 +87,12 @@ func _get_cutted_polygons(coords: Vector2, shape: PackedVector2Array) -> Array[P
         Vector2(x, y+CELL_SIZE),
     ])
     return Geometry2D.intersect_polygons(shape, cut_polygon)
+
+func _get_property_list():
+    return [
+        {
+        "name": "_data",
+        "type": TYPE_DICTIONARY,
+        "usage": PROPERTY_USAGE_STORAGE,
+        }
+    ]
