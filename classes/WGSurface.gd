@@ -1,3 +1,4 @@
+@tool
 class_name WGSurface extends Resource
 
 @export var texture: Texture2D:
