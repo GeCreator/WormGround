@@ -10,21 +10,22 @@ func make_surface() -> WGSurface:
     var surface := WGSurface.new()
     var insert_id: int = 1
     for k in _surfaces:
-        print(int(k))
         if insert_id<=int(k):
             insert_id = int(k)+1
     _surfaces[insert_id] = surface
+    emit_changed()
+    ResourceSaver.save(self, resource_path)
     return surface
 
 func _get_property_list():
     return [
         {
-        "name": "_borders",
+        "name": "_surfaces",
         "type": TYPE_DICTIONARY,
         "usage": PROPERTY_USAGE_STORAGE,
         },
         {
-        "name": "_surfaces",
+        "name": "_borders",
         "type": TYPE_DICTIONARY,
         "usage": PROPERTY_USAGE_STORAGE,
         },
