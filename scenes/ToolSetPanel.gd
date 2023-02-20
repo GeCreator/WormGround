@@ -15,7 +15,6 @@ func set_tool_set(toolset: WGToolSet):
         _refresh()
 
 func _refresh():
-    print('here')
     _clear_children($"%SurfaceContainer")
     var surfaces = _tool_set.get_surfaces()
     for k in surfaces:

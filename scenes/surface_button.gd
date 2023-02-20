@@ -19,7 +19,6 @@ func init(surface: WGSurface):
     _surface.connect('changed', _refresh)
 
 func _refresh():
-    print('surface_button::_refresh')
     if _surface.texture!=null:
         $"%texture".texture = _surface.texture
         $"%texture".visible = true
@@ -29,12 +28,11 @@ func _refresh():
         $"%color".color = _surface.color
         $"%texture".visible = false
         $"%color".visible = true
-    
 
 func _on_pressed():
     selected.emit()
     disabled = true
-    
+
 func _can_drop_data(position, data):
     return data['type']=='files' and data['files'].size()==1
 
