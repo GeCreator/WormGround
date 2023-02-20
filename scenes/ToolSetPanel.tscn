@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://i6v3tflo1lxb" path="res://icon.svg" id="2_47hir"]
 
 [node name="ToolSetPanel" type="TabContainer"]
+custom_minimum_size = Vector2(0, 200)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
