@@ -4,8 +4,9 @@ class_name WGSurface extends Resource
 @export var texture: Texture2D:
     set(value):
         texture = value
-        _width = value.get_image().get_width()
-        _height = value.get_image().get_height()
+        if value is Texture2D:
+            _width = value.get_image().get_width()
+            _height = value.get_image().get_height()
         emit_changed()
 @export var color: Color = Color.WHITE:
     set(value):

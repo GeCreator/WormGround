@@ -40,7 +40,7 @@ func _can_drop_data(position, data):
 
 func _drop_data(position, data):
     if data['type']=='files' and data['files'].size()==1:
-        var image: Texture2D = load(data['files'][0])
-        if image!=null:
+        var image = load(data['files'][0])
+        if image is Texture2D:
             _surface.texture = image
 
