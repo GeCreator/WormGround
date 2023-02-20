@@ -1,14 +1,44 @@
 @tool
-extends Control
+extends TabContainer
 signal action(name, value)
-
-func _on_create_surfaces_pressed():
-    var sname: String = $GridContainer/name.text
-    sname = sname.strip_edges()
-    if sname.length()>0:
-        action.emit('create_surface', sname)
-    else:
-        show_error('Enter any unique name you want')
+var _tool_set: WGToolSet
+var SurfaceButton: PackedScene = preload("surface_button.tscn")
+var _previous_surface_button_selected = null
 
 func show_error(text: String):
     OS.alert(text)
+
+func set_tool_set(toolset: WGToolSet):
+    _tool_set = toolset
+    if not _tool_set.changed.is_connected(_refresh):
+        _tool_set.changed.connect(_refresh)
+        _refresh()
+
+func _refresh():
+    print('here')
+    _clear_children($"%SurfaceContainer")
+    var surfaces = _tool_set.get_surfaces()
+    for k in surfaces:
+        var surface_button = _create(SurfaceButton, surfaces[k])
+        surface_button.selected.connect(_on_surface_button_selected.bind(surface_button))
+        $"%SurfaceContainer".add_child(surface_button)
+
+func _create(scene: PackedScene, data):
+    var instance = scene.instantiate()
+    instance.init(data)
+    return instance
+
+func _clear_children(node: Node):
+    for c in node.get_children():
+        remove_child(c)
+        c.queue_free()
+
+func _on_create_surface_pressed():
+    action.emit('create_surface', null)
+
+func _on_surface_button_selected(button: Node):
+    if _previous_surface_button_selected!=null:
+        _previous_surface_button_selected.unselect()
+    _previous_surface_button_selected = button
+    action.emit('surface_selected', button.get_surface())
+    

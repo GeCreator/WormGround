@@ -1,0 +1,45 @@
+[gd_scene load_steps=3 format=3 uid="uid://b22wgvat43e4x"]
+
+[ext_resource type="Script" path="res://addons/worm_ground/scenes/surface_button.gd" id="1_0ilmf"]
+[ext_resource type="Texture2D" uid="uid://cjmc8jmy4qvtw" path="res://assets/rock.png" id="2_inbwk"]
+
+[node name="surface_button" type="Button"]
+custom_minimum_size = Vector2(120, 120)
+offset_left = -60.0
+offset_top = -62.0
+offset_right = 60.0
+offset_bottom = 58.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+script = ExtResource("1_0ilmf")
+
+[node name="HFlowContainer" type="HFlowContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.071
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 0.0599995
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="texture" type="TextureRect" parent="HFlowContainer"]
+unique_name_in_owner = true
+texture_repeat = 2
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("2_inbwk")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="color" type="ColorRect" parent="HFlowContainer"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+mouse_filter = 2
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

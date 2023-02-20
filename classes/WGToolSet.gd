@@ -17,6 +17,9 @@ func make_surface() -> WGSurface:
     ResourceSaver.save(self, resource_path)
     return surface
 
+func get_surfaces() -> Dictionary:
+    return _surfaces
+
 func _get_property_list():
     return [
         {

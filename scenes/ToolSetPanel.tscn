@@ -1,30 +1,75 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://ddaymmnne0an3"]
 
-[ext_resource type="Script" path="res://addons/worm_ground/scenes/ToolSetPanel.gd" id="1_3attv"]
+[ext_resource type="Script" path="res://addons/worm_ground/scenes/ToolSetPanel.gd" id="1_3417a"]
+[ext_resource type="Texture2D" uid="uid://i6v3tflo1lxb" path="res://icon.svg" id="2_47hir"]
 
-[node name="ToolsSetPanel" type="Control"]
-custom_minimum_size = Vector2(0, 200)
-layout_mode = 3
+[node name="ToolSetPanel" type="TabContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_3attv")
+tab_alignment = 2
+script = ExtResource("1_3417a")
 
-[node name="GridContainer" type="GridContainer" parent="."]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="Surfaces" type="TabBar" parent="."]
+layout_mode = 2
+mouse_filter = 1
+
+[node name="GridContainer" type="GridContainer" parent="Surfaces"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 columns = 2
 
-[node name="name" type="LineEdit" parent="GridContainer"]
-custom_minimum_size = Vector2(300, 0)
+[node name="Panel" type="Panel" parent="Surfaces/GridContainer"]
 layout_mode = 2
-placeholder_text = "surface name"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 1
 
-[node name="create surfaces" type="Button" parent="GridContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="Surfaces/GridContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -12.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Surfaces/GridContainer/Panel/MarginContainer"]
 layout_mode = 2
-text = "create"
 
-[connection signal="pressed" from="GridContainer/create surfaces" to="." method="_on_create_surfaces_pressed"]
+[node name="SurfaceContainer" type="HFlowContainer" parent="Surfaces/GridContainer/Panel/MarginContainer/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Container" type="MarginContainer" parent="Surfaces/GridContainer"]
+layout_mode = 2
+
+[node name="create_surface" type="Button" parent="Surfaces/GridContainer/Container"]
+layout_mode = 2
+text = "Create Surface"
+icon = ExtResource("2_47hir")
+
+[node name="Borders" type="TabBar" parent="."]
+visible = false
+layout_mode = 2
+
+[node name="Decals" type="TabBar" parent="."]
+visible = false
+layout_mode = 2
+
+[node name="Brushes" type="TabBar" parent="."]
+visible = false
+layout_mode = 2
+
+[connection signal="pressed" from="Surfaces/GridContainer/Container/create_surface" to="." method="_on_create_surface_pressed"]

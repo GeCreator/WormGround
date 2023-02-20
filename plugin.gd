@@ -37,35 +37,37 @@ class Pen:
 
 var _is_in_edit_mode: bool = false
 var _pen: Pen
-var node: WormGround
+var _node: WormGround
 var _panel: Control
+var _panel_is_visible: bool = false
 
 func _enter_tree():
     _pen = Pen.new()
     _pen.draw.connect(_on_pen_draw)
     
-    _panel = preload("./scenes/ToolSetPanel.tscn").instantiate()
-    
     get_editor_interface().get_selection().selection_changed.connect(_on_selection_changed)
     var gui = get_editor_interface().get_base_control()
     var icon = gui.get_theme_icon("Polygon2D", "EditorIcons")
     add_custom_type("WormGround", "Node2D", preload("classes/WormGround.gd"), icon)
+    
+    _panel = preload("./scenes/ToolSetPanel.tscn").instantiate()
+    _panel.connect('action', _on_panel_action)
 
 func _on_selection_changed():
     var selected: Array = get_editor_interface().get_selection().get_selected_nodes()
     if selected.size()==1 and selected[0] is WormGround:
-        node = selected[0]
-        _is_in_edit_mode = true
-        _activate_panel()
+        _node = selected[0]
+        if not _node.property_list_changed.is_connected(_check_tool_set):
+            _node.property_list_changed.connect(_check_tool_set)
+        _check_tool_set()
     else:
-        node = null
-        _is_in_edit_mode = false
+        _node = null
         _diactivate_panel()
 
 func _forward_canvas_draw_over_viewport(overlay: Control):
     if not _is_in_edit_mode: return false
 
-    var vt: Transform2D = node.get_viewport_transform()
+    var vt: Transform2D = _node.get_viewport_transform()
     var mouse_position: Vector2 = overlay.get_local_mouse_position()
     var pos_transform := Transform2D().translated(vt.get_origin()).inverse()
     var scale_transform := Transform2D().scaled(vt.get_scale())
@@ -77,48 +79,60 @@ func _forward_canvas_gui_input(event) -> bool:
     # ---------------------------------
     if (event is InputEventMouseButton):
         _pen.is_active = event.is_pressed()
+        
         return true
     # ---------------------------------
     if (event is InputEventMouseMotion):
-        var vt: Transform2D = node.get_viewport_transform()
+        var vt: Transform2D = _node.get_viewport_transform()
         var global_mouse_position = _get_global_mouse_position(event.position)
         _pen.set_position(_get_global_mouse_position(event.position))
         update_overlays()
+        
         return true
     return false
 
 func _get_global_mouse_position(screen_point: Vector2) -> Vector2:
-    var vt: Transform2D = node.get_viewport_transform()
+    var vt: Transform2D = _node.get_viewport_transform()
     return vt.affine_inverse().get_origin() + screen_point*vt.affine_inverse().get_scale()
 
 func _on_pen_draw(shape: PackedVector2Array):
     if _is_in_edit_mode:
-        node.level_data._data['polygon'] = shape;
+        if not _node._data is Dictionary:
+            _node._data = {}
+        _node._data["mouse"] = shape
 
 func _handles(object) -> bool:    
     return _is_in_edit_mode
+
+func _activate_panel():
+    if _panel_is_visible: return
+    _panel_is_visible = true
+    add_control_to_bottom_panel(_panel,'WormGround')
+    make_bottom_panel_item_visible(_panel)
+
+func _diactivate_panel():
+    _panel_is_visible = false
+    remove_control_from_bottom_panel(_panel)
+
+func _on_panel_action(action: String, value):
+    match(action):
+        'create_surface':
+            var surface := _node.tool_set.make_surface()
+            get_editor_interface().edit_resource(surface)
+        'surface_selected':
+            get_editor_interface().edit_resource(value)
+        _: print('unknow panel action')
+
+func _check_tool_set():
+    if _node.tool_set is WGToolSet:
+        _panel.set_tool_set(_node.tool_set)
+        _activate_panel()
+    else:
+        _diactivate_panel()
 
 func _exit_tree():
     remove_custom_type("WormGround")
     _diactivate_panel()
     _panel.queue_free()
 
-func _activate_panel():
-    add_control_to_bottom_panel(_panel,'WormGround (ToolSet)')
-    _panel.connect('action', _on_panel_action)
-    make_bottom_panel_item_visible(_panel)
 
-func _diactivate_panel():
-    _panel.disconnect('action', _on_panel_action)
-    remove_control_from_bottom_panel(_panel)
-
-func _on_panel_action(action: String, value):
-    match(action):
-        'create_surface':
-            var surface = WGSurface.new()
-            if node.tool_set.add_surface(value, surface):
-                get_editor_interface().edit_resource(surface)
-            else:
-                _panel.show_error('Surface "%s" already exists in this toolset' % value)
-        
-        _: print('unknow panel action')
