@@ -13,8 +13,10 @@ func make_surface() -> WGSurface:
         if insert_id<=int(k):
             insert_id = int(k)+1
     _surfaces[insert_id] = surface
+    
+    if resource_path!='':
+        ResourceSaver.save(self, resource_path)
     emit_changed()
-    ResourceSaver.save(self, resource_path)
     return surface
 
 func get_surfaces() -> Dictionary:

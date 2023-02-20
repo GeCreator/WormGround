@@ -29,7 +29,7 @@ func _create(scene: PackedScene, data):
 
 func _clear_children(node: Node):
     for c in node.get_children():
-        remove_child(c)
+        node.remove_child(c)
         c.queue_free()
 
 func _on_create_surface_pressed():
