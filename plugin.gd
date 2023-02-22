@@ -47,7 +47,7 @@ func _enter_tree():
     
     get_editor_interface().get_selection().selection_changed.connect(_on_selection_changed)
     var gui = get_editor_interface().get_base_control()
-    var icon = gui.get_theme_icon("Polygon2D", "EditorIcons")
+    var icon = gui.get_theme_icon("SphereShape3D", "EditorIcons")
     add_custom_type("WormGround", "Node2D", preload("classes/WormGround.gd"), icon)
     
     _panel = preload("./scenes/ToolSetPanel.tscn").instantiate()
