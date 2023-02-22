@@ -1,49 +1,16 @@
 @tool
 extends EditorPlugin
 
-class Pen:
-    var radius: float = 25.0
-    var vertexes: int = 12
-    var is_active: bool = false
-    var previous_position: Vector2
-    var shape: PackedVector2Array
-
-    signal draw(shape)
-
-    func set_position(pos: Vector2):
-        if is_active:
-            if previous_position.distance_to(pos)>radius:
-                emit_signal('draw', shape)
-                previous_position = pos
-        else:
-            previous_position = pos
-
-        shape = _make_polyline(previous_position, pos, radius, vertexes)
-
-    func _make_polyline(from: Vector2, to: Vector2, radius: float, vertex_count: int = 10) -> PackedVector2Array:
-        var a: PackedVector2Array = _make_circle(from, radius, vertex_count)
-        var b: PackedVector2Array = _make_circle(to, radius, vertex_count)
-        a.append_array(b)
-        return Geometry2D.convex_hull(a)
-
-    func _make_circle(position: Vector2, radius: float, segments: int = 12) -> PackedVector2Array:
-        var result : PackedVector2Array = []
-        var s: float = 2*PI/segments;
-        for i in range(0, segments):
-            var x : float = position.x + cos(i*s) * radius
-            var y : float = position.y + sin(i*s) * radius
-            result.append(Vector2(x, y))
-        return result
 
 var _is_in_edit_mode: bool = false
-var _pen: Pen
+var _brush: WGBrush
 var _node: WormGround
 var _panel: Control
 var _panel_is_visible: bool = false
 
 func _enter_tree():
-    _pen = Pen.new()
-    _pen.draw.connect(_on_pen_draw)
+    _brush = WGBrush.new()
+    _brush.draw.connect(_on_brush_draw)
     
     get_editor_interface().get_selection().selection_changed.connect(_on_selection_changed)
     var gui = get_editor_interface().get_base_control()
@@ -72,7 +39,7 @@ func _forward_canvas_draw_over_viewport(overlay: Control):
     var pos_transform := Transform2D().translated(vt.get_origin()).inverse()
     var scale_transform := Transform2D().scaled(vt.get_scale())
 
-    overlay.draw_polyline_colors(_pen.shape * scale_transform * pos_transform, PackedColorArray(), 1.0)
+    overlay.draw_polyline_colors(_brush.shape * scale_transform * pos_transform, PackedColorArray(), 1.0)
 
 func _forward_canvas_gui_input(event) -> bool:
     if not _is_in_edit_mode: return false
@@ -83,14 +50,14 @@ func _forward_canvas_gui_input(event) -> bool:
             return true
     # ---------------------------------
     if (event is InputEventMouseButton):
-        _pen.is_active = event.is_pressed()
+        _brush.is_active = event.is_pressed()
         
         return true
     # ---------------------------------
     if (event is InputEventMouseMotion):
         var vt: Transform2D = _node.get_viewport_transform()
         var global_mouse_position = _get_global_mouse_position(event.position)
-        _pen.set_position(_get_global_mouse_position(event.position))
+        _brush.set_position(_get_global_mouse_position(event.position))
         update_overlays()
         
         return true
@@ -100,7 +67,7 @@ func _get_global_mouse_position(screen_point: Vector2) -> Vector2:
     var vt: Transform2D = _node.get_viewport_transform()
     return vt.affine_inverse().get_origin() + screen_point*vt.affine_inverse().get_scale()
 
-func _on_pen_draw(shape: PackedVector2Array):
+func _on_brush_draw(shape: PackedVector2Array):
     if _is_in_edit_mode:
         if not _node._data is Dictionary:
             _node._data = {}
