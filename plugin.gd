@@ -77,6 +77,11 @@ func _forward_canvas_draw_over_viewport(overlay: Control):
 func _forward_canvas_gui_input(event) -> bool:
     if not _is_in_edit_mode: return false
     # ---------------------------------
+    if (event is InputEventKey):
+        if event.keycode == KEY_ESCAPE:
+            _is_in_edit_mode = false
+            return true
+    # ---------------------------------
     if (event is InputEventMouseButton):
         _pen.is_active = event.is_pressed()
         
@@ -101,7 +106,7 @@ func _on_pen_draw(shape: PackedVector2Array):
             _node._data = {}
         _node._data["mouse"] = shape
 
-func _handles(object) -> bool:    
+func _handles(object) -> bool:
     return _is_in_edit_mode
 
 func _activate_panel():
@@ -120,6 +125,7 @@ func _on_panel_action(action: String, value):
             var surface := _node.tool_set.make_surface()
             get_editor_interface().edit_resource(surface)
         'surface_selected':
+            _is_in_edit_mode = true
             get_editor_interface().edit_resource(value)
         _: print('unknow panel action')
 
