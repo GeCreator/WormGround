@@ -12,7 +12,7 @@ func get_surface() -> WGSurface:
     return _surface
 
 func unselect():
-    disabled = false
+    button_pressed = false
 
 func init(surface: WGSurface):
     _surface = surface
@@ -31,7 +31,7 @@ func _refresh():
 
 func _on_pressed():
     selected.emit()
-    disabled = true
+    button_pressed = true
 
 func _can_drop_data(position, data):
     return data['type']=='files' and data['files'].size()==1
