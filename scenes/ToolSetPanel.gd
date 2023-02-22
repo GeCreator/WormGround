@@ -1,6 +1,7 @@
 @tool
 extends TabContainer
 signal action(name, value)
+
 var _tool_set: WGToolSet
 var SurfaceButton: PackedScene = preload("surface_button.tscn")
 var _previous_surface_button_selected = null
@@ -39,5 +40,5 @@ func _on_surface_button_selected(button: Node):
     if _previous_surface_button_selected!=null:
         _previous_surface_button_selected.unselect()
     _previous_surface_button_selected = button
-    action.emit('surface_selected', button.get_surface())
+    action.emit('tool_selected', button.get_surface())
     

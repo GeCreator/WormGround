@@ -91,7 +91,7 @@ func _on_panel_action(action: String, value):
         'create_surface':
             var surface := _node.tool_set.make_surface()
             get_editor_interface().edit_resource(surface)
-        'surface_selected':
+        'tool_selected':
             _is_in_edit_mode = true
             get_editor_interface().edit_resource(value)
         _: print('unknow panel action')
