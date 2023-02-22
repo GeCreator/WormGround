@@ -16,7 +16,7 @@ var _data: Dictionary
 
 var _cells: Dictionary
 
-func add(shape: PackedVector2Array):
+func add_surface(surface: WGSurface, shape: PackedVector2Array):
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
         pass
@@ -29,7 +29,7 @@ func remove(shape: PackedVector2Array):
 
 func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
     var result: Array[WGCell]
-    var aabb := _get_shape_area(shape)
+    var aabb := WGUtils.get_shape_area(shape)
     var from = _cell_coords(aabb.position)
     var to = _cell_coords(aabb.end)
 
@@ -39,23 +39,6 @@ func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
             result.append(_get_cell(pos))
     return result
 
-func _get_shape_area(shape: PackedVector2Array) -> Rect2:
-    var result: Rect2
-    var min_x: float = INF
-    var min_y: float = INF
-    var max_x: float = -INF
-    var max_y: float = -INF
-    # detect shape borders
-    for p in shape:
-        if p.x<min_x: min_x = p.x
-        if p.y<min_y: min_y = p.y
-        if p.x>max_x: max_x = p.x
-        if p.y>max_y: max_y = p.y
-    
-    result.position = Vector2(min_x,min_y)
-    result.end = Vector2(max_x, max_y)
-    return result
-    
 func _get_cell(coords: Vector2) -> WGCell:
     var id = _make_cell_id(coords);
     if _cells.has(id): return _cells[id]

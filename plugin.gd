@@ -7,6 +7,7 @@ var _brush: WGBrush
 var _node: WormGround
 var _panel: Control
 var _panel_is_visible: bool = false
+var _current_tool
 
 func _enter_tree():
     _brush = WGBrush.new()
@@ -68,10 +69,9 @@ func _get_global_mouse_position(screen_point: Vector2) -> Vector2:
     return vt.affine_inverse().get_origin() + screen_point*vt.affine_inverse().get_scale()
 
 func _on_brush_draw(shape: PackedVector2Array):
-    if _is_in_edit_mode:
-        if not _node._data is Dictionary:
-            _node._data = {}
-        _node._data["mouse"] = shape
+    if not _is_in_edit_mode: return
+    if _current_tool is WGSurface:
+        _node.add_surface(_current_tool, shape)
 
 func _handles(object) -> bool:
     return _is_in_edit_mode
@@ -93,6 +93,7 @@ func _on_panel_action(action: String, value):
             get_editor_interface().edit_resource(surface)
         'tool_selected':
             _is_in_edit_mode = true
+            _current_tool = value
             get_editor_interface().edit_resource(value)
         _: print('unknow panel action')
 
