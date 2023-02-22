@@ -16,3 +16,7 @@ static func get_shape_area(shape: PackedVector2Array) -> Rect2:
     result.position = Vector2(min_x,min_y)
     result.end = Vector2(max_x, max_y)
     return result
+
+static func get_cell_coords(pos: Vector2, cell_size: int) -> Vector2:
+    var pm = pos.posmod(float(cell_size))
+    return (pos - pm)/cell_size

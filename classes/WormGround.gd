@@ -30,8 +30,8 @@ func remove(shape: PackedVector2Array):
 func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
     var result: Array[WGCell]
     var aabb := WGUtils.get_shape_area(shape)
-    var from = _cell_coords(aabb.position)
-    var to = _cell_coords(aabb.end)
+    var from = WGUtils.get_cell_coords(aabb.position, CELL_SIZE)
+    var to = WGUtils.get_cell_coords(aabb.end, CELL_SIZE)
 
     for x in range(from.x,to.x+1):
         for y in range(from.y, to.y+1):
@@ -44,12 +44,6 @@ func _get_cell(coords: Vector2) -> WGCell:
     if _cells.has(id): return _cells[id]
     #_cells[id] = WTCell.new(coords, CELL_SIZE, _canvas_group)
     return  _cells[id]
-
-
-# возвращает позицию ячейки полученную из указаных координат
-func _cell_coords(pos: Vector2) -> Vector2:
-    var pm = pos.posmod(float(CELL_SIZE))
-    return (pos - pm)/CELL_SIZE
 
 # Преобразует координаты ячейки (Например Vector2(10, 20))
 # в id ячейки
