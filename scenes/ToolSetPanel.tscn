@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://ddaymmnne0an3"]
+[gd_scene load_steps=2 format=3 uid="uid://ddaymmnne0an3"]
 
 [ext_resource type="Script" path="res://addons/worm_ground/scenes/ToolSetPanel.gd" id="1_3417a"]
-[ext_resource type="Texture2D" uid="uid://i6v3tflo1lxb" path="res://icon.svg" id="2_47hir"]
 
 [node name="ToolSetPanel" type="TabContainer"]
 custom_minimum_size = Vector2(0, 200)
@@ -59,7 +58,6 @@ layout_mode = 2
 [node name="create_surface" type="Button" parent="Surfaces/GridContainer/Container"]
 layout_mode = 2
 text = "Create Surface"
-icon = ExtResource("2_47hir")
 
 [node name="Borders" type="TabBar" parent="."]
 visible = false
