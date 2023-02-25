@@ -156,7 +156,6 @@ class ShpVertex:
 
 static func remove(remove:PackedVector2Array, shapes:Array) -> Array:
     var result: Array[PackedVector2Array] = []
-    var neutral: Array[PackedVector2Array] = []
     for s in shapes:
         if _shape_is_intersects(remove, s):
             var res = Geometry2D.clip_polygons(s, remove)
@@ -210,7 +209,7 @@ static func _res_analysis(res: Array) -> int:
     
     return RES_ANOMALY
 
-static func _resolve_errors(shapes: Array) -> PackedVector2Array:
+static func _resolve_errors(shapes: Array[PackedVector2Array]) -> PackedVector2Array:
     var x = ShapesConnector.new(shapes)
     return x.get_result()
 
