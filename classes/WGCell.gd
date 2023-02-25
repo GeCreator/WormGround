@@ -31,10 +31,10 @@ func add_surface(surface_id:int, shape: PackedVector2Array):
         if surface_id==sid:
             var new_parts = _get_cutted_polygons(shape)
             for p in new_parts:
-                polygons = ShapesCalc.union(p, polygons)
+                polygons = WGGeometryCore.union(p, polygons)
             _surfaces[sid] = _make_optimized(polygons)
         else:
-            polygons = ShapesCalc.remove(shape, polygons)
+            polygons = WGGeometryCore.remove(shape, polygons)
             _surfaces[sid] = _make_optimized(polygons)
     emit_signal('changed')
 
@@ -44,7 +44,7 @@ func get_surfaces() -> Dictionary:
 func remove(shape: PackedVector2Array):
     for sid in _surfaces:
         var polygons = _surfaces[sid]
-        polygons = ShapesCalc.remove(shape, polygons)
+        polygons = WGGeometryCore.remove(shape, polygons)
         _surfaces[sid] = _make_optimized(polygons)
     emit_signal('changed')
 
