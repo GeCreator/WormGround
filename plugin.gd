@@ -56,16 +56,11 @@ func _forward_canvas_gui_input(event) -> bool:
             return true
     # ---------------------------------
     if (event is InputEventMouseButton):
-        if event.button_index == MOUSE_BUTTON_LEFT \
-        || event.button_index == MOUSE_BUTTON_RIGHT:
-            _brush.is_active = event.is_pressed()
-            _brush.button = event.button_index
+        _brush.click(event.button_index, event.is_pressed())
         return true
     # ---------------------------------
     if (event is InputEventMouseMotion):
-        var vt: Transform2D = _node.get_viewport_transform()
-        var global_mouse_position = _get_global_mouse_position(event.position)
-        _brush.set_position(global_mouse_position)
+        _brush.update_position(_get_global_mouse_position(event.position))
         update_overlays()
         return true
     return false
