@@ -1,15 +1,14 @@
 @tool
 class_name WGCell
+signal changed
 
 var _size: int
 var _coords: Vector2
-var _groups: Dictionary
-var _canvas_group: DTCanvasGroup
+var _surfaces: Dictionary
 
-func _init(coords: Vector2, size: int, canvas_group: DTCanvasGroup ):
+func _init(coords: Vector2, size: int):
     _coords = coords
     _size = size
-    _canvas_group = canvas_group
 
 func _get_cutted_polygons(shape: PackedVector2Array) -> Array[PackedVector2Array]:
     var x = _coords.x * _size
@@ -23,33 +22,31 @@ func _get_cutted_polygons(shape: PackedVector2Array) -> Array[PackedVector2Array
     ])
     return Geometry2D.intersect_polygons(shape, cut_polygon)
 
-func get_coords() -> Vector2:
-    return _coords
-
-func add(shape: PackedVector2Array, brush: DTBrush):
-    var surface = brush
-    if not _groups.has(surface): _groups[surface] = []
+func add_surface(surface_id:int, shape: PackedVector2Array):
+    if not _surfaces.has(surface_id):
+        _surfaces[surface_id] = []
     
-    for s in _groups:
-        var polygons = _groups[s]
-        if surface==s:
+    for sid in _surfaces:
+        var polygons = _surfaces[sid]
+        if surface_id==sid:
             var new_parts = _get_cutted_polygons(shape)
             for p in new_parts:
                 polygons = ShapesCalc.union(p, polygons)
-            _groups[s] = _make_optimized(polygons)
+            _surfaces[sid] = _make_optimized(polygons)
         else:
             polygons = ShapesCalc.remove(shape, polygons)
-            _groups[s] = _make_optimized(polygons)
-    #_canvas_group.update_canvas(self, brush)
-    
+            _surfaces[sid] = _make_optimized(polygons)
+    emit_signal('changed')
+
+func get_surfaces() -> Dictionary:
+    return _surfaces
 
 func remove(shape: PackedVector2Array):
-    for b in _groups:
-        var polygons = _groups[b]
+    for sid in _surfaces:
+        var polygons = _surfaces[sid]
         polygons = ShapesCalc.remove(shape, polygons)
-        _groups[b] = _make_optimized(polygons)
-        #_canvas_group.update_canvas(self, b)
-    
+        _surfaces[sid] = _make_optimized(polygons)
+    emit_signal('changed')
 
 func _make_optimized(polygons: Array) -> Array:
     var result : = Array()

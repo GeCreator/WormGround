@@ -53,8 +53,9 @@ func _forward_canvas_gui_input(event) -> bool:
             return true
     # ---------------------------------
     if (event is InputEventMouseButton):
-        _brush.is_active = event.is_pressed()
-        
+        if event.button_index == MOUSE_BUTTON_LEFT \
+        || event.button_index == MOUSE_BUTTON_RIGHT:
+            _brush.is_active = event.is_pressed()
         return true
     # ---------------------------------
     if (event is InputEventMouseMotion):

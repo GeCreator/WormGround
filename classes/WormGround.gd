@@ -9,23 +9,28 @@ const CELL_SIZE: int = 100
 @export var tool_set: WGToolSet:
     set(value):
         tool_set = value
+        for canvas in _canvases:
+            (canvas as WGCanvas).set_toolset(tool_set)
         notify_property_list_changed()
 
 var _data: Dictionary
 
-
 var _cells: Dictionary
+var _canvases: Dictionary
+var _canvas_render_list: Array[WGCanvas] = []
 
-func add_surface(surface: WGSurface, shape: PackedVector2Array):
+func add_surface(surface_id: int, shape: PackedVector2Array):
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
-        pass
-        # cell.add(shape, brush)
+        cell.add_surface(surface_id, shape)
 
 func remove(shape: PackedVector2Array):
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
         cell.remove(shape)
+
+func _edit_get_rect():
+    return Rect2(Vector2.ZERO, Vector2(10000,10000))
 
 func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
     var result: Array[WGCell]
@@ -35,35 +40,40 @@ func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
 
     for x in range(from.x,to.x+1):
         for y in range(from.y, to.y+1):
-            var pos:= Vector2(x, y)
-            result.append(_get_cell(pos))
+            var coords:= Vector2(x, y)
+            result.append(_get_cell(coords))
     return result
 
 func _get_cell(coords: Vector2) -> WGCell:
-    var id = _make_cell_id(coords);
+    var x = int(coords.x)
+    var y = int(coords.y)
+    
+    var id = WGUtils.make_cell_id(coords, MAX_BLOCK_RANGE);
     if _cells.has(id): return _cells[id]
-    #_cells[id] = WTCell.new(coords, CELL_SIZE, _canvas_group)
+    var cell = WGCell.new(coords, CELL_SIZE)
+    cell.changed.connect(_get_canvas(coords).update.bind(cell))
+    _cells[id] = cell
     return  _cells[id]
 
-# Преобразует координаты ячейки (Например Vector2(10, 20))
-# в id ячейки
-func _make_cell_id(coords: Vector2) -> int:
-    var id: int = 0
-    id += int(MAX_BLOCK_RANGE + coords.x)
-    id += pow(MAX_BLOCK_RANGE, 2) * 2 + coords.y * MAX_BLOCK_RANGE * 2
-    return id
+func _get_canvas(cell_coords: Vector2) -> WGCanvas:
+    # 1 WGCanvas for 4 WGCell
+    var x = int(cell_coords.x)
+    var y = int(cell_coords.y)
+    var canvas_id = WGUtils.make_cell_id(Vector2(x-absi(x%2), y-absi(y%2)), MAX_BLOCK_RANGE)
+    if not _canvases.has(canvas_id):
+        var canvas := WGCanvas.new(get_canvas_item())
+        canvas.set_toolset(tool_set)
+        canvas.changed.connect(_on_canvas_changed.bind(canvas))
+        _canvases[canvas_id] = canvas
+    return _canvases[canvas_id]
 
-func _get_cutted_polygons(coords: Vector2, shape: PackedVector2Array) -> Array[PackedVector2Array]:
-    var x = coords.x * CELL_SIZE
-    var y = coords.y * CELL_SIZE
-    
-    var cut_polygon = PackedVector2Array([
-        Vector2(x, y),
-        Vector2(x+CELL_SIZE, y),
-        Vector2(x+CELL_SIZE, y+CELL_SIZE),
-        Vector2(x, y+CELL_SIZE),
-    ])
-    return Geometry2D.intersect_polygons(shape, cut_polygon)
+func _on_canvas_changed(canvas: WGCanvas):
+    _canvas_render_list.append(canvas)
+
+func _process(_delta: float):
+    while _canvas_render_list.size()>0:
+        var canvas : WGCanvas = _canvas_render_list.pop_back()
+        canvas.render()
 
 func _get_property_list():
     return [

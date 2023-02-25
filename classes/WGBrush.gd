@@ -9,7 +9,7 @@ signal draw(shape)
 
 func set_position(pos: Vector2):
     if is_active:
-        if previous_position.distance_to(pos)>radius:
+        if previous_position.distance_to(pos)>(radius/2):
             emit_signal('draw', shape)
             previous_position = pos
     else:
