@@ -6,21 +6,29 @@ var _borders: Dictionary
 var _decals: Dictionary
 var _brushes: Dictionary
 
-func make_surface() -> WGSurface:
-    var surface := WGSurface.new()
+
+func add_surface(surface: WGSurface) -> int:
+    var id := _get_insert_id(_surfaces)
+    _surfaces[id] = surface
+    return id
+    
+    if Engine.is_editor_hint() && resource_path!='':
+        ResourceSaver.save(self, resource_path)
+    emit_changed()
+    return id
+
+func get_surfaces() -> Dictionary:
+    return _surfaces
+
+func get_surface(id: int) -> WGSurface:
+    return _surfaces[id]
+
+func _get_insert_id(d: Dictionary) -> int:
     var insert_id: int = 1
     for k in _surfaces:
         if insert_id<=int(k):
             insert_id = int(k)+1
-    _surfaces[insert_id] = surface
-    
-    if resource_path!='':
-        ResourceSaver.save(self, resource_path)
-    emit_changed()
-    return surface
-
-func get_surfaces() -> Dictionary:
-    return _surfaces
+    return insert_id
 
 func _get_property_list():
     return [

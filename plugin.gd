@@ -8,6 +8,7 @@ var _node: WormGround
 var _panel: Control
 var _panel_is_visible: bool = false
 var _current_tool
+var _current_tool_id: int
 
 func _enter_tree():
     _brush = WGBrush.new()
@@ -71,7 +72,7 @@ func _get_global_mouse_position(screen_point: Vector2) -> Vector2:
 func _on_brush_draw(shape: PackedVector2Array):
     if not _is_in_edit_mode: return
     if _current_tool is WGSurface:
-        _node.add_surface(_current_tool, shape)
+        _node.add_surface(_current_tool_id, shape)
 
 func _handles(object) -> bool:
     return _is_in_edit_mode
@@ -89,7 +90,8 @@ func _diactivate_panel():
 func _on_panel_action(action: String, value):
     match(action):
         'create_surface':
-            var surface := _node.tool_set.make_surface()
+            var surface := WGSurface.new()
+            _node.tool_set.add_surface(surface)
             get_editor_interface().edit_resource(surface)
         'tool_selected':
             _is_in_edit_mode = true
