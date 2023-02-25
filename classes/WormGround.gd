@@ -57,9 +57,8 @@ func _get_cell(coords: Vector2) -> WGCell:
 
 func _get_canvas(cell_coords: Vector2) -> WGCanvas:
     # 1 WGCanvas for 4 WGCell
-    var x = int(cell_coords.x)
-    var y = int(cell_coords.y)
-    var canvas_id = WGUtils.make_cell_id(Vector2(x-absi(x%2), y-absi(y%2)), MAX_BLOCK_RANGE)
+    var canvas_coords := (cell_coords - cell_coords.posmod(2.0))/2.0
+    var canvas_id = WGUtils.make_cell_id(canvas_coords, MAX_BLOCK_RANGE)
     if not _canvases.has(canvas_id):
         var canvas := WGCanvas.new(get_canvas_item())
         canvas.set_toolset(tool_set)
