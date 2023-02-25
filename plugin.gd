@@ -30,6 +30,7 @@ func _on_selection_changed():
             _node.property_list_changed.connect(_check_tool_set)
         _check_tool_set()
     else:
+        _is_in_edit_mode = false
         _node = null
         _diactivate_panel()
 
