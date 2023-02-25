@@ -18,8 +18,8 @@ func set_tool_set(toolset: WGToolSet):
 func _refresh():
     _clear_children($"%SurfaceContainer")
     var surfaces = _tool_set.get_surfaces()
-    for k in surfaces:
-        var surface_button = _create(SurfaceButton, surfaces[k])
+    for id in surfaces:
+        var surface_button = _create(SurfaceButton, {id=id, surface=surfaces[id]})
         surface_button.selected.connect(_on_surface_button_selected.bind(surface_button))
         $"%SurfaceContainer".add_child(surface_button)
 
@@ -40,5 +40,5 @@ func _on_surface_button_selected(button: Node):
     if _previous_surface_button_selected!=null:
         _previous_surface_button_selected.unselect()
     _previous_surface_button_selected = button
-    action.emit('tool_selected', button.get_surface())
+    action.emit('tool_selected', {id=button.get_id(), tool=button.get_surface()})
     

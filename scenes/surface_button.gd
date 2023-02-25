@@ -3,10 +3,14 @@ extends Button
 signal selected
 
 var _surface: WGSurface
+var _id: int
 
 func _ready():
     focus_mode = Control.FOCUS_NONE
     _refresh()
+
+func get_id() -> int:
+    return _id
 
 func get_surface() -> WGSurface:
     return _surface
@@ -14,8 +18,10 @@ func get_surface() -> WGSurface:
 func unselect():
     button_pressed = false
 
-func init(surface: WGSurface):
-    _surface = surface
+func init(data: Dictionary):
+    _id = data["id"]
+    tooltip_text = "id: " + str(_id)
+    _surface = data["surface"]
     _surface.connect('changed', _refresh)
 
 func _refresh():

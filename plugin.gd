@@ -93,8 +93,9 @@ func _on_panel_action(action: String, value):
             get_editor_interface().edit_resource(surface)
         'tool_selected':
             _is_in_edit_mode = true
-            _current_tool = value
-            get_editor_interface().edit_resource(value)
+            _current_tool = value["tool"]
+            _current_tool_id = value["id"]
+            get_editor_interface().edit_resource(_current_tool)
         _: print('unknow panel action')
 
 func _check_tool_set():
