@@ -9,6 +9,7 @@ var _cells: Dictionary
 var _brush: WGSurface
 var _polygons: Array[PackedVector2Array]
 var _rendered: bool = true
+var _used_surfaces: Dictionary
 
 func _init(base_canvas: RID):
     _canvas = RenderingServer.canvas_item_create()
@@ -22,8 +23,7 @@ func set_toolset(tool_set: WGToolSet):
 func update(cell: WGCell):
     if not _cells.has(cell):
         _cells[cell] = cell
-    emit_signal('changed')
-    _rendered = false
+    emit_changed()
 
 func render():
     if _rendered: return
@@ -32,7 +32,10 @@ func render():
     for c in _cells:
         var surfaces = (c as WGCell).get_surfaces()
         for surface_id in surfaces:
-            var surface = _tool_set.get_surface(surface_id)
+            if not _used_surfaces.has(surface_id):
+                _used_surfaces[surface_id] = _tool_set.get_surface(surface_id)
+                (_used_surfaces[surface_id] as WGSurface).changed.connect(emit_changed)
+            var surface = _used_surfaces[surface_id]
             _draw_surfaces(surface, surfaces[surface_id])
 
 func _draw_surfaces(surface: WGSurface, polygons: Array):
@@ -47,3 +50,7 @@ func _draw_surfaces(surface: WGSurface, polygons: Array):
             RenderingServer.canvas_item_add_polygon(_canvas, polygon, colors, uvs, surface.texture)
         else:
             RenderingServer.canvas_item_add_polygon(_canvas, polygon, colors, uvs)
+
+func emit_changed():
+    _rendered = false
+    emit_signal("changed")
