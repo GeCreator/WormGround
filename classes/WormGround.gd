@@ -24,13 +24,10 @@ func add_surface(surface_id: int, shape: PackedVector2Array):
     for cell in cells:
         cell.add_surface(surface_id, shape)
 
-func remove(shape: PackedVector2Array):
+func remove_surface(shape: PackedVector2Array):
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
         cell.remove(shape)
-
-func _edit_get_rect():
-    return Rect2(Vector2.ZERO, Vector2(10000,10000))
 
 func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
     var result: Array[WGCell]

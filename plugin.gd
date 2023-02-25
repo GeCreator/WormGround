@@ -9,10 +9,12 @@ var _panel: Control
 var _panel_is_visible: bool = false
 var _current_tool
 var _current_tool_id: int
+var _overlay: Control
 
 func _enter_tree():
     _brush = WGBrush.new()
     _brush.draw.connect(_on_brush_draw)
+    _brush.erase.connect(_on_brush_erase)
     
     get_editor_interface().get_selection().selection_changed.connect(_on_selection_changed)
     var gui = get_editor_interface().get_base_control()
@@ -50,20 +52,21 @@ func _forward_canvas_gui_input(event) -> bool:
     if (event is InputEventKey):
         if event.keycode == KEY_ESCAPE:
             _is_in_edit_mode = false
+            update_overlays()
             return true
     # ---------------------------------
     if (event is InputEventMouseButton):
         if event.button_index == MOUSE_BUTTON_LEFT \
         || event.button_index == MOUSE_BUTTON_RIGHT:
             _brush.is_active = event.is_pressed()
+            _brush.button = event.button_index
         return true
     # ---------------------------------
     if (event is InputEventMouseMotion):
         var vt: Transform2D = _node.get_viewport_transform()
         var global_mouse_position = _get_global_mouse_position(event.position)
-        _brush.set_position(_get_global_mouse_position(event.position))
+        _brush.set_position(global_mouse_position)
         update_overlays()
-        
         return true
     return false
 
@@ -75,6 +78,11 @@ func _on_brush_draw(shape: PackedVector2Array):
     if not _is_in_edit_mode: return
     if _current_tool is WGSurface:
         _node.add_surface(_current_tool_id, shape)
+
+func _on_brush_erase(shape: PackedVector2Array):
+    if not _is_in_edit_mode: return
+    if _current_tool is WGSurface:
+        _node.remove_surface(shape)
 
 func _handles(object) -> bool:
     return _is_in_edit_mode
