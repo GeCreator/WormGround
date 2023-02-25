@@ -47,6 +47,7 @@ func _draw_surfaces(surface: WGSurface, polygons: Array):
             var a: Vector2 = p
             a.x = a.x/float(w)
             a.y = a.y/float(h)
+            a *= surface.scale
             uvs.append(a)
             colors.append(surface.color)
             i+=1
