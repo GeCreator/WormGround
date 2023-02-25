@@ -5,8 +5,10 @@ class_name WGSurface extends Resource
     set(value):
         texture = value
         if value is Texture2D:
-            _width = value.get_image().get_width()
-            _height = value.get_image().get_height()
+            _size = Vector2(
+                value.get_image().get_width(),
+                value.get_image().get_height()
+            )
         emit_changed()
 @export var color: Color = Color.WHITE:
     set(value):
@@ -21,11 +23,7 @@ class_name WGSurface extends Resource
         scale = value
         emit_changed()
 
-var _width: int
-var _height: int
+var _size: Vector2
 
-func get_width() -> int:
-    return _width
-
-func get_height() -> int:
-    return _height
+func get_size() -> Vector2:
+    return _size

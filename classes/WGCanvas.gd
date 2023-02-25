@@ -35,26 +35,15 @@ func render():
             var surface = _tool_set.get_surface(surface_id)
             _draw_surfaces(surface, surfaces[surface_id])
 
-
 func _draw_surfaces(surface: WGSurface, polygons: Array):
-    var w = surface.get_width()
-    var h = surface.get_height()
+    var size := surface.get_size()
+    var colors := PackedColorArray([surface.color])
     for polygon in polygons:
-        var colors: PackedColorArray
         var uvs: PackedVector2Array
-        var i: int = 0
         for p in polygon:
-            var a: Vector2 = p
-            a.x = a.x/float(w)
-            a.y = a.y/float(h)
-            a *= surface.scale
+            var a: Vector2 = p / size * surface.scale
             uvs.append(a)
-            colors.append(surface.color)
-            i+=1
         if surface.texture:
             RenderingServer.canvas_item_add_polygon(_canvas, polygon, colors, uvs, surface.texture)
         else:
             RenderingServer.canvas_item_add_polygon(_canvas, polygon, colors, uvs)
-        
-        
-
