@@ -14,39 +14,33 @@ func info(shapes: Array[PackedVector2Array]):
         RES_BROKEN: print('RES_BROKEN')
         RES_ANOMALY: print('RES_ANOMALY')
         RES_MULTIPLE_NORMAL: print('RES_MULTIPLE_NORMAL')
-func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
-    _iter = 0
-    #_normalize(add)
-    var r := _merge_shapes(add, shapes)
-    _normalize_multiple(r)    
-    return r
-
-func _merge_shapes(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
-    print("iter: %s" % _iter)
     _iter+=1
+func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
     var result: Array[PackedVector2Array]
-    var broken: Array[PackedVector2Array]
+    var holes: Array[PackedVector2Array]
     for shape in shapes:
-        if broken.size()>1:
-            return broken
-            broken = _merge_shapes(shape, broken)
-            continue
         var m = Geometry2D.merge_polygons(add, shape)
-        info(m)
         match(_res_analysis(m)):
             RES_NORMAL:
+                for h in holes:
+                    _shape_is_intersects(h, add)
+                    result.append(shape)
+                    break
                 add.clear()
                 add.append_array(m[0])
             RES_BROKEN:
-                broken =_resolve_hole_errors(m)
-                return broken
+                for err in m:
+                    if Geometry2D.is_polygon_clockwise(err):
+                        holes.append(err)
+                    else:
+                        add.clear()
+                        add.append_array(err)
             RES_MULTIPLE_NORMAL:
-                #print('result+ %s vertexes shape' % shape.size())
                 result.append(shape)
-    if broken.size()==0:
-        result.append(add)
-    else:
-        result.append_array(broken)
+    var clipped : Array[PackedVector2Array] = [add]
+    for hole in holes:
+        clipped = _clip_from_polygons(hole, clipped)
+    result.append_array(clipped)
     return result
 
 func remove(remove:PackedVector2Array, shapes:Array) -> Array[PackedVector2Array]:
