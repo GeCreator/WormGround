@@ -129,6 +129,59 @@ func _remove_by_list(data, remove_list: PackedInt32Array):
     for n in remove_list:
         data.remove_at(n)
 
+func _chunk_shape(shape: PackedVector2Array) -> Array[PackedVector2Array]:
+    var gp: Dictionary # graph points
+    var coords: PackedVector2Array
+    var links: Array[PackedInt32Array]
+    var size  = shape.size()
+    for n in size:
+        shape[n] = shape[n].snapped(snap_grid_size)
+
+    # build graph
+    var index: int = 0
+    for n in size:
+        var point:= shape[n]
+        if not gp.has(point):
+            gp[point] = index
+            links.append(PackedInt32Array())
+            coords.append(point)
+            index +=1
+
+    # build links
+    for n in size:
+        var point:= shape[n]
+        var next_point:= shape[wrapi(n+1,0,size)]
+        var current : int = gp[point]
+        var next : int = gp[next_point]
+        if current!=next:
+            links[current].append(next)
+
+    # prepare shape point indexes
+    size = links.size()
+    var all: Array[PackedInt32Array]
+    for i in size:
+        var result: PackedInt32Array
+        var links_stack: PackedInt32Array = links[i]
+        if links_stack.size()==0: continue
+        for tmp in size:
+            var next:=links_stack[links_stack.size()-1]
+            links_stack.remove_at(links_stack.size()-1)
+            result.append(next)
+            links_stack = links[next]
+            if next==i: break
+        all.append(result)
+    
+    # construct shapes from point indexes
+    var result: Array[PackedVector2Array]
+    for points in all:
+        if points.size()<3: continue
+        var new_shape: PackedVector2Array
+        for idx in points:
+            new_shape.append(coords[idx])
+        result.append(new_shape)
+    
+    return result
+
 ## return PackedVector2Array with 2 points of segment n
 func _get_segment(n: int, polygon: PackedVector2Array) -> PackedVector2Array:
     var size = polygon.size()
