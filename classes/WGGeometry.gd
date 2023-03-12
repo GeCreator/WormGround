@@ -126,10 +126,6 @@ func _remove_short_segments(shape:PackedVector2Array):
     if remove_list.size()>0:
         _remove_short_segments(shape)
 
-func _dump_triangulation(shape: PackedVector2Array):
-    if Geometry2D.triangulate_polygon(shape).size()>0: return
-    print(str(shape).replace("(","Vector2("))
-
 func _snap_to_grid(shape: PackedVector2Array):
     
     for i in shape.size():
@@ -300,7 +296,6 @@ func _clip_from_polygons(clip: PackedVector2Array, shapes: Array[PackedVector2Ar
                 result.append_array(_resolve_hole_errors(res))
             RES_MULTIPLE_NORMAL:
                 result.append_array(res)
-    
     _normalize(result)
     return result
 
