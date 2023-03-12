@@ -79,7 +79,7 @@ func _normalize(shapes: Array[PackedVector2Array]):
     var addons: Array[PackedVector2Array]
     for shape in shapes:
         _snap_to_grid(shape)
-        #_remove_short_segments(shape)
+        _remove_short_segments(shape)
         _remove_bad_angles(shape)
         if Geometry2D.triangulate_polygon(shape).size()==0:
             var chunked := _chunk_shape(shape)
@@ -97,14 +97,21 @@ func _normalize(shapes: Array[PackedVector2Array]):
 func _remove_short_segments(shape:PackedVector2Array):
     var remove_list: PackedInt32Array
     var size := shape.size()
-    var prev:= shape[-1]
+    var skip: bool = false
     for n in size:
-        var curr := shape[n]
-        if prev.distance_to(curr)<1.0:
+        if skip:
+            skip = false
+            continue
+        var prev:= shape[n-1]
+        var curr := shape[wrapi(n+1,0,size)]
+        if prev.distance_to(curr)<4.0:
+            skip = true
             remove_list.append(n)
         else:
             prev = curr
     _remove_by_list(shape, remove_list)
+    if remove_list.size()>0:
+        _remove_short_segments(shape)
 
 func _dump_triangulation(shape: PackedVector2Array):
     if Geometry2D.triangulate_polygon(shape).size()>0: return
@@ -159,10 +166,6 @@ func _clean_from_trash(shapes:Array[PackedVector2Array]):
         i+=1
         # shape is just segment!
         if shape.size()<3:
-            remove_list.append(i)
-            continue
-        # remove small shape
-        if _it_small_shape(shape):
             remove_list.append(i)
             continue
         
