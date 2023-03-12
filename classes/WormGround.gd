@@ -2,7 +2,7 @@
 # The main project object
 class_name WormGround extends Node2D
 const MAX_BLOCK_RANGE: int = 10000
-const CELL_SIZE: int = 100
+const CELL_SIZE: int = 200
 
 @export_category("WormGround")
 
