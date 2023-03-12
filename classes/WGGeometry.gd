@@ -4,7 +4,7 @@ const CUT_LINE_SIZE = 10000.0
 const BAN_ANGLE:= 0.0349 # TAU/180 = 2°
     
 const MIN_PART_SIZE := 15.0 # min sum length of polygon segments
-const SMOOTH_SIZE := 2.0 
+const SMOOTH_SIZE := 4.0 
 const SNAP_GRID_SIZE := Vector2(1.0, 1.0)
 
 const RES_NORMAL: int = 0 # normal shape
