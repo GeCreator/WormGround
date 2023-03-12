@@ -47,8 +47,10 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
             remove_list.append(i)
     _remove_by_list(shapes, remove_list)
     
+    var clipped : Array[PackedVector2Array] = []
     for shape in shapes:
         var m = Geometry2D.merge_polygons(add, shape)
+        
         match(_res_analysis(m)):
             RES_NORMAL:
                 add.clear()
@@ -60,8 +62,18 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
                     else:
                         add.clear()
                         add.append_array(err)
-    var clipped : Array[PackedVector2Array] = [add]
+            RES_MULTIPLE_NORMAL:
+                add.clear()
+                for n in m:
+                    if n.size()>add.size():
+                        add.clear()
+                        add.append_array(n)
+                    else:
+                        clipped.append(n)
+                
+    clipped.append(add)
     _clean_from_trash(holes)
+    
     if holes.size()>0:
         for hole in holes:
             clipped = _clip_from_polygons(hole, clipped)
