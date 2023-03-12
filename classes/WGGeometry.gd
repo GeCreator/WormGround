@@ -3,8 +3,9 @@ class_name WGGeometry
 const CUT_LINE_SIZE = 10000.0
 const BAN_ANGLE:= 0.0349 # TAU/180 = 2°
     
-const MIN_PART_SIZE = 15.0 # min sum length of polygon segments 
-const SNAP_GRID_SIZE = Vector2(1.0, 1.0)
+const MIN_PART_SIZE := 15.0 # min sum length of polygon segments
+const SMOOTH_SIZE := 2.0 
+const SNAP_GRID_SIZE := Vector2(1.0, 1.0)
 
 const RES_NORMAL: int = 0 # normal shape
 const RES_BROKEN: int = 1 # shape with holes inside
@@ -104,7 +105,7 @@ func _remove_short_segments(shape:PackedVector2Array):
             continue
         var prev:= shape[n-1]
         var curr := shape[wrapi(n+1,0,size)]
-        if prev.distance_to(curr)<4.0:
+        if prev.distance_to(curr)<SMOOTH_SIZE:
             skip = true
             remove_list.append(n)
         else:
