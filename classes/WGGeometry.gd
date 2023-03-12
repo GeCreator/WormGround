@@ -1,17 +1,41 @@
 class_name WGGeometry
 
 const CUT_LINE_SIZE = 10000.0
-const BAN_ANGLE:= 0.0174533 # TAU/360 or 1 degrees
+const BAN_ANGLE:= 0.0349 # TAU/180 = 2°
+    
 const MIN_PART_SIZE = 15.0 # min sum length of polygon segments 
-var snap_grid_size = Vector2(10,10)
+const SNAP_GRID_SIZE = Vector2(1.0, 1.0)
 
 const RES_NORMAL: int = 0 # normal shape
 const RES_BROKEN: int = 1 # shape with holes inside
 const RES_ANOMALY: int = 2 # shape have multiple normal shapes with holes
 const RES_MULTIPLE_NORMAL: int = 3 # multiple normal shapes
 
+func _info(shapes:Array[PackedVector2Array]):
+    match(_res_analysis(shapes)):
+        RES_NORMAL: print('RES_NORMAL')
+        RES_BROKEN: print('RES_BROKEN')
+        RES_ANOMALY: print('RES_ANOMALY')
+        RES_MULTIPLE_NORMAL: print('RES_MULTIPLE_NORMAL')
+
+func _debug(shapes:Array[PackedVector2Array], text: String):
+    for s in shapes:
+        for p in s:
+            if p.abs().length()>100000:
+                print("Infinity point %s" % text)
+                print('dump: ', str(s).replace("(","Vector2("))
+                s.clear()
+                continue
+        
+        if s.size()<3:
+            print("Short shape %s" % text)
+        elif Geometry2D.triangulate_polygon(s).size()==0:
+            print("Triangulate Error %s" % text)
+            print('dump: ', str(s).replace("(","Vector2("))
+
 func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
     add = add.duplicate()
+    _snap_to_grid(add)
     var result: Array[PackedVector2Array]
     var holes: Array[PackedVector2Array]
     var remove_list: PackedInt32Array
@@ -36,70 +60,69 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
                         add.clear()
                         add.append_array(err)
     var clipped : Array[PackedVector2Array] = [add]
-    
-    _remove_small_shapes(holes)
-    for hole in holes:
-        clipped = _clip_from_polygons(hole, clipped)
-    _repair_multiple(clipped)
+    _clean_from_trash(holes)
+    if holes.size()>0:
+        for hole in holes:
+            clipped = _clip_from_polygons(hole, clipped)
+    else:
+        _normalize(clipped)
     result.append_array(clipped)
     return result
 
 func remove(remove:PackedVector2Array, shapes:Array) -> Array[PackedVector2Array]:
     remove = remove.duplicate()
-    var result: Array[PackedVector2Array] = []
-    result = _clip_from_polygons(remove, shapes)
-    _repair_multiple(result)
-    return result
+    _snap_to_grid(remove)
+    return _clip_from_polygons(remove.duplicate(), shapes)
 
-func _repair_multiple(shapes: Array[PackedVector2Array]):
-    var remove_shapes: PackedInt32Array
-    for i in shapes.size():
-        if not _repair(shapes[i]):
-            _dump_triangulation(shapes[i])
-            remove_shapes.append(i)
-    remove_shapes.reverse()
-    for i in remove_shapes:
-        shapes.remove_at(i)
-
-func _repair(shape: PackedVector2Array) -> bool:
-    #_snap_to_grid(shape)
-    _remove_bad_angles(shape)
-    for x in 3: # repair tries
-        if Geometry2D.triangulate_polygon(shape).size()>0: return true
-        var size: int = shape.size()
-        var remove_list: PackedInt32Array
-        for i in size:
-            var sgm:= _get_segment(i, shape)
-            if _get_segment_length(sgm)<1:
-                var sgm_prev:= _get_segment(i-1, shape)
-                if _segment_is_global_ortho(sgm_prev):
-                    remove_list.append(wrapi(i+1,0, size))
-                else:
-                    remove_list.append(i)
-        _remove_by_list(shape, remove_list)
-    return false
+func _normalize(shapes: Array[PackedVector2Array]):
+    #_debug(shapes, 'before normalize')
+    var addons: Array[PackedVector2Array]
+    for shape in shapes:
+        _snap_to_grid(shape)
+        #_remove_short_segments(shape)
+        _remove_bad_angles(shape)
+        if Geometry2D.triangulate_polygon(shape).size()==0:
+            var chunked := _chunk_shape(shape)
+            if chunked.size()>0:
+                shape.clear()
+                shape.append_array(chunked.pop_back())
+                addons.append_array(chunked)
+    _clean_from_trash(shapes)
+    _clean_from_trash(addons)
+    #_debug(addons,"in addons")
+    #_debug(shapes,"in shapes")
+    shapes.append_array(addons)
+    
+    
+func _remove_short_segments(shape:PackedVector2Array):
+    var remove_list: PackedInt32Array
+    var size := shape.size()
+    var prev:= shape[-1]
+    for n in size:
+        var curr := shape[n]
+        if prev.distance_to(curr)<1.0:
+            remove_list.append(n)
+        else:
+            prev = curr
+    _remove_by_list(shape, remove_list)
 
 func _dump_triangulation(shape: PackedVector2Array):
     if Geometry2D.triangulate_polygon(shape).size()>0: return
     print(str(shape).replace("(","Vector2("))
 
 func _snap_to_grid(shape: PackedVector2Array):
+    
     for i in shape.size():
-        shape[i] = shape[i].snapped(snap_grid_size)
+        shape[i] = shape[i].snapped(SNAP_GRID_SIZE)
 
-func _remove_small_shapes(shapes: Array[PackedVector2Array]):
-    var remove_list: PackedInt32Array
-    for j in shapes.size():
-        var total_length: float = 0
-        var shape = shapes[j]
-        for n in shape.size():
-            var segment:= _get_segment(n, shape)
-            total_length += _get_segment_length(segment)
-            if total_length>MIN_PART_SIZE:
-                break
-        if total_length<MIN_PART_SIZE:
-            remove_list.append(j)
-    _remove_by_list(shapes, remove_list)
+func _it_small_shape(shape: PackedVector2Array) -> bool:
+    var total_length: float = 0
+    for n in shape.size():
+        var segment:= _get_segment(n, shape)
+        total_length += _get_segment_length(segment)
+        if total_length>MIN_PART_SIZE:
+            return false
+    return total_length<MIN_PART_SIZE
 
 func _remove_bad_angles(shape: PackedVector2Array):
     var remove_list: PackedInt32Array
@@ -129,14 +152,52 @@ func _remove_by_list(data, remove_list: PackedInt32Array):
     for n in remove_list:
         data.remove_at(n)
 
+func _clean_from_trash(shapes:Array[PackedVector2Array]):
+    var remove_list: PackedInt32Array
+    var i: int = -1
+    for shape in shapes:
+        i+=1
+        # shape is just segment!
+        if shape.size()<3:
+            remove_list.append(i)
+            continue
+        # remove small shape
+        if _it_small_shape(shape):
+            remove_list.append(i)
+            continue
+        
+    _remove_by_list(shapes, remove_list)
+
 func _chunk_shape(shape: PackedVector2Array) -> Array[PackedVector2Array]:
     var gp: Dictionary # graph points
     var coords: PackedVector2Array
     var links: Array[PackedInt32Array]
     var size  = shape.size()
+    # =========================================================================
+    # add support points
+    var tmp: Array
+    tmp.resize(size)
+    for p in size:
+        tmp[p] = PackedVector2Array([shape[p]])
+    var m: int = -1
+    var skip_next: bool = false
     for n in size:
-        shape[n] = shape[n].snapped(snap_grid_size)
-
+        var s1 := _get_segment(n, shape)
+        for j in range(n+2, size+m):
+            var s2 := _get_segment(j, shape)
+            var x
+            skip_next = true
+            x = Geometry2D.segment_intersects_segment(s1[0],s1[1],s2[0],s2[1])
+            if x!=null:
+                tmp[n].append(x)
+                tmp[j].append(x)
+        m = 0
+    shape.clear()
+    for pnts in tmp:
+        shape.append_array(pnts)
+    size = shape.size()
+    # =========================================================================
+    _snap_to_grid(shape)
     # build graph
     var index: int = 0
     for n in size:
@@ -163,7 +224,7 @@ func _chunk_shape(shape: PackedVector2Array) -> Array[PackedVector2Array]:
         var result: PackedInt32Array
         var links_stack: PackedInt32Array = links[i]
         if links_stack.size()==0: continue
-        for tmp in size:
+        for t in size:
             var next:=links_stack[links_stack.size()-1]
             links_stack.remove_at(links_stack.size()-1)
             result.append(next)
@@ -172,15 +233,14 @@ func _chunk_shape(shape: PackedVector2Array) -> Array[PackedVector2Array]:
         all.append(result)
     
     # construct shapes from point indexes
-    var result: Array[PackedVector2Array]
+    var result: Array[PackedVector2Array] = []
     for points in all:
-        if points.size()<3: continue
         var new_shape: PackedVector2Array
         for idx in points:
             new_shape.append(coords[idx])
         result.append(new_shape)
     
-    return result
+    return _resolve_hole_errors(result)
 
 ## return PackedVector2Array with 2 points of segment n
 func _get_segment(n: int, polygon: PackedVector2Array) -> PackedVector2Array:
@@ -224,7 +284,8 @@ func _clip_from_polygons(clip: PackedVector2Array, shapes: Array[PackedVector2Ar
                 result.append_array(_resolve_hole_errors(res))
             RES_MULTIPLE_NORMAL:
                 result.append_array(res)
-    _remove_small_shapes(result)
+    
+    _normalize(result)
     return result
 
 func _resolve_hole_errors(shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
@@ -236,7 +297,7 @@ func _resolve_hole_errors(shapes: Array[PackedVector2Array]) -> Array[PackedVect
             holes.append(shape)
         else:
             result.append(shape)
-
+    
     for hole in holes:
         var addons: Array[PackedVector2Array] = []
         if result.size()>1:
@@ -270,6 +331,8 @@ func _remove_hole(normal: PackedVector2Array, hole: PackedVector2Array) -> Array
             x = Geometry2D.segment_intersects_segment(line_b[0],line_b[1],sgm[0],sgm[1])
             if x!=null and hrp.distance_squared_to(x)<hrp.distance_squared_to(pr):
                 sr = n; pr=x
+    if not pl.is_finite() or not pr.is_finite():
+        return [normal]
     # build top segment
     var top_segment: PackedVector2Array
     top_segment.append(pl)
