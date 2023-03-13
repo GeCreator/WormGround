@@ -53,13 +53,13 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
             result.append(shapes[i])
             remove_list.append(i)
     _remove_by_list(shapes, remove_list)
-    
+
     var clipped : Array[PackedVector2Array] = []
     for shape in shapes:
         var m = Geometry2D.merge_polygons(add, shape)
-        
         match(_res_analysis(m)):
             RES_NORMAL:
+                holes = _clip_from_polygons(shape, holes)
                 add.clear()
                 add.append_array(m[0])
             RES_BROKEN:
@@ -67,17 +67,13 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
                     if Geometry2D.is_polygon_clockwise(err):
                         holes.append(err)
                     else:
+                        holes = _clip_from_polygons(shape, holes)
                         add.clear()
                         add.append_array(err)
             RES_MULTIPLE_NORMAL:
                 add.clear()
-                for n in m:
-                    if n.size()>add.size():
-                        add.clear()
-                        add.append_array(n)
-                    else:
-                        clipped.append(n)
-                
+                add.append_array(m.pop_front())
+                clipped.append_array(m)
     clipped.append(add)
     _clean_from_trash(holes)
     
@@ -95,7 +91,6 @@ func remove(remove:PackedVector2Array, shapes:Array) -> Array[PackedVector2Array
     return _clip_from_polygons(remove, shapes)
 
 func _normalize(shapes: Array[PackedVector2Array]):
-    #_debug(shapes, 'before normalize')
     var addons: Array[PackedVector2Array]
     for shape in shapes:
         _snap_to_grid(shape)
@@ -109,8 +104,6 @@ func _normalize(shapes: Array[PackedVector2Array]):
                 addons.append_array(chunked)
     _clean_from_trash(shapes)
     _clean_from_trash(addons)
-    #_debug(addons,"in addons")
-    #_debug(shapes,"in shapes")
     shapes.append_array(addons)
     
     
@@ -347,6 +340,7 @@ func _remove_hole(normal: PackedVector2Array, hole: PackedVector2Array) -> Array
     var line_b:= _get_collision_line(hrp, normal, CUT_LINE_SIZE)
     var sl: int = -1; var pl:=Vector2.INF # segment left; point left
     var sr: int = 0; var pr:=Vector2.INF # segment right; point right
+    
     var nsize: int = normal.size()
     for n in nsize:
         var sgm = _get_segment(n, normal)
