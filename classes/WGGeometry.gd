@@ -397,12 +397,11 @@ func _get_left_right_vertexes(shape: PackedVector2Array) -> PackedInt32Array:
     var left: float = INF
     var right: float = -INF
     for p in shape:
-        var s = _get_segment(i, shape)
-        if s[0].y<s[1].y:
-            if p.x<left:
-                left = p.x
-                result[0] = i
-        elif p.x>right:
+        var s = _get_segment(i-1, shape)
+        if p.x<left and s[0].y<s[1].y:
+            left = p.x
+            result[0] = i
+        if p.x>right and s[0].y>s[1].y:
             right = p.x
             result[1] = i
         i+=1
