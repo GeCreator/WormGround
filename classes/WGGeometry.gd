@@ -296,13 +296,23 @@ func _clip_from_polygons(clip: PackedVector2Array, shapes: Array[PackedVector2Ar
                 result.append_array(_resolve_hole_errors(res))
             RES_MULTIPLE_NORMAL:
                 result.append_array(res)
+            RES_ANOMALY:
+                var holes: Array[PackedVector2Array]
+                var normal: Array[PackedVector2Array]
+                for err in res:
+                    if Geometry2D.is_polygon_clockwise(err): # is hole
+                        holes.append(err)
+                    else:
+                        normal.append(err)
+                for h in holes:
+                    normal = _clip_from_polygons(h,normal)
+                result.append_array(normal)
     _normalize(result)
     return result
 
 func _resolve_hole_errors(shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
     var result :Array[PackedVector2Array]
     var holes: Array[PackedVector2Array]
-    
     for shape in shapes:
         if Geometry2D.is_polygon_clockwise(shape): # is hole
             holes.append(shape)
