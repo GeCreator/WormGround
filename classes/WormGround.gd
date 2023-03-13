@@ -20,11 +20,13 @@ var _canvases: Dictionary
 var _canvas_render_list: Array[WGCanvas] = []
 
 func add_surface(surface_id: int, shape: PackedVector2Array):
+    shape = _get_transformed_shape(shape)
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
         cell.add_surface(surface_id, shape)
 
 func remove_surface(shape: PackedVector2Array):
+    shape = _get_transformed_shape(shape)
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
         cell.remove(shape)
@@ -62,6 +64,16 @@ func _get_canvas(cell_coords: Vector2) -> WGCanvas:
         canvas.changed.connect(_on_canvas_changed.bind(canvas))
         _canvases[canvas_id] = canvas
     return _canvases[canvas_id]
+
+func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
+    var t:=Transform2D()
+    var s = transform.get_scale()
+    s.x = 1.0/s.x
+    s.y = 1.0/s.y
+    t = t.scaled(s)
+    t = t.rotated(transform.get_rotation())
+    t = t.translated(transform.origin)
+    return shape * t
 
 func _on_canvas_changed(canvas: WGCanvas):
     _canvas_render_list.append(canvas)
