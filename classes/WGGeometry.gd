@@ -92,7 +92,7 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
 func remove(remove:PackedVector2Array, shapes:Array) -> Array[PackedVector2Array]:
     remove = remove.duplicate()
     _snap_to_grid(remove)
-    return _clip_from_polygons(remove.duplicate(), shapes)
+    return _clip_from_polygons(remove, shapes)
 
 func _normalize(shapes: Array[PackedVector2Array]):
     #_debug(shapes, 'before normalize')
@@ -337,7 +337,6 @@ func _resolve_hole_errors(shapes: Array[PackedVector2Array]) -> Array[PackedVect
         result[0].append_array(x[0])
         if x.size()==2:
             result.append(x[1])
-
     return result
 
 func _remove_hole(normal: PackedVector2Array, hole: PackedVector2Array) -> Array[PackedVector2Array]:
