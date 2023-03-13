@@ -344,12 +344,12 @@ func _remove_hole(normal: PackedVector2Array, hole: PackedVector2Array) -> Array
     var nsize: int = normal.size()
     for n in nsize:
         var sgm = _get_segment(n, normal)
-        var x
-        x = Geometry2D.segment_intersects_segment(line_a[0],line_a[1],sgm[0],sgm[1])
-        if x!=null and hlp.distance_squared_to(x)<hlp.distance_squared_to(pl):
-            sl = n; pl=x
+        if sgm[0].y>sgm[1].y: 
+            var x = Geometry2D.segment_intersects_segment(line_a[0],line_a[1],sgm[0],sgm[1])
+            if x!=null and hlp.distance_squared_to(x)<hlp.distance_squared_to(pl):
+                sl = n; pl=x
         else:
-            x = Geometry2D.segment_intersects_segment(line_b[0],line_b[1],sgm[0],sgm[1])
+            var x = Geometry2D.segment_intersects_segment(line_b[0],line_b[1],sgm[0],sgm[1])
             if x!=null and hrp.distance_squared_to(x)<hrp.distance_squared_to(pr):
                 sr = n; pr=x
     if not pl.is_finite() or not pr.is_finite():
