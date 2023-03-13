@@ -19,6 +19,13 @@ func _info(shapes:Array[PackedVector2Array]):
         RES_ANOMALY: print('RES_ANOMALY')
         RES_MULTIPLE_NORMAL: print('RES_MULTIPLE_NORMAL')
 
+func _debug_rotate_shape(shape: PackedVector2Array, offset: int):
+    var result: PackedVector2Array
+    result.append_array( shape.slice(offset) )
+    result.append_array( shape.slice(0, offset) )
+    shape.clear()
+    shape.append_array(result)
+
 func _debug(shapes:Array[PackedVector2Array], text: String):
     for s in shapes:
         for p in s:
