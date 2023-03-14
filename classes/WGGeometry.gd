@@ -41,25 +41,25 @@ func _debug(shapes:Array[PackedVector2Array], text: String):
             print("Triangulate Error %s" % text)
             print('dump: ', str(s).replace("(","Vector2("))
 
-func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
+func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]):
     add = add.duplicate()
     _snap_to_grid(add)
-    var result: Array[PackedVector2Array]
     var holes: Array[PackedVector2Array]
+    var intersected: Array[PackedVector2Array]
     var remove_list: PackedInt32Array
     
     for i in shapes.size():
-        if not _shape_is_intersects(shapes[i], add):
-            result.append(shapes[i])
+        if _shape_is_intersects(shapes[i], add):
+            intersected.append(shapes[i])
             remove_list.append(i)
     _remove_by_list(shapes, remove_list)
 
     var clipped : Array[PackedVector2Array] = []
-    for shape in shapes:
+    for shape in intersected:
         var m = Geometry2D.merge_polygons(add, shape)
         match(_res_analysis(m)):
             RES_NORMAL:
-                holes = _clip_from_polygons(shape, holes)
+                _clip_from_polygons(shape, holes)
                 add.clear()
                 add.append_array(m[0])
             RES_BROKEN:
@@ -67,7 +67,7 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
                     if Geometry2D.is_polygon_clockwise(err):
                         holes.append(err)
                     else:
-                        holes = _clip_from_polygons(shape, holes)
+                        _clip_from_polygons(shape, holes)
                         add.clear()
                         add.append_array(err)
             RES_MULTIPLE_NORMAL:
@@ -79,16 +79,15 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[
     
     if holes.size()>0:
         for hole in holes:
-            clipped = _clip_from_polygons(hole, clipped)
+            _clip_from_polygons(hole, clipped)
     else:
         _normalize(clipped)
-    result.append_array(clipped)
-    return result
+    shapes.append_array(clipped)
 
-func remove(remove:PackedVector2Array, shapes:Array) -> Array[PackedVector2Array]:
+func remove(remove:PackedVector2Array, shapes:Array):
     remove = remove.duplicate()
     _snap_to_grid(remove)
-    return _clip_from_polygons(remove, shapes)
+    _clip_from_polygons(remove, shapes)
 
 func _normalize(shapes: Array[PackedVector2Array]):
     var addons: Array[PackedVector2Array]
@@ -285,9 +284,18 @@ func _get_segment_intersection(s1: PackedVector2Array, s2: PackedVector2Array) -
         return point
     return s1[1] # mean error :]
 
-func _clip_from_polygons(clip: PackedVector2Array, shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
+func _clip_from_polygons(clip: PackedVector2Array, shapes: Array[PackedVector2Array]):
     var result: Array[PackedVector2Array]
-    for shape in shapes:
+    var intersected: Array[PackedVector2Array]
+    var remove_list: PackedInt32Array
+
+    for i in shapes.size():
+        if _shape_is_intersects(shapes[i], clip):
+            intersected.append(shapes[i])
+            remove_list.append(i)
+    _remove_by_list(shapes, remove_list)
+
+    for shape in intersected:
         var res = Geometry2D.clip_polygons(shape, clip)
         match (_res_analysis(res)):
             RES_NORMAL:
@@ -305,10 +313,10 @@ func _clip_from_polygons(clip: PackedVector2Array, shapes: Array[PackedVector2Ar
                     else:
                         normal.append(err)
                 for h in holes:
-                    normal = _clip_from_polygons(h,normal)
+                    _clip_from_polygons(h,normal)
                 result.append_array(normal)
     _normalize(result)
-    return result
+    shapes.append_array(result)
 
 func _resolve_hole_errors(shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
     var result :Array[PackedVector2Array]
@@ -323,7 +331,7 @@ func _resolve_hole_errors(shapes: Array[PackedVector2Array]) -> Array[PackedVect
         var addons: Array[PackedVector2Array] = []
         if result.size()>1:
             hole.reverse()
-            result = _clip_from_polygons(hole, result)
+            _clip_from_polygons(hole, result)
             continue
         var x := _remove_hole(result[0], hole)
         result[0].clear()

@@ -26,18 +26,15 @@ func _get_cutted_polygons(shape: PackedVector2Array) -> Array[PackedVector2Array
 
 func add_surface(surface_id:int, shape: PackedVector2Array):
     if not _surfaces.has(surface_id):
-        _surfaces[surface_id] = []
+        var v:Array[PackedVector2Array] = []
+        _surfaces[surface_id] = v
     
     for sid in _surfaces:
-        var polygons = _surfaces[sid]
         if surface_id==sid:
             var new_parts = _get_cutted_polygons(shape)
             for p in new_parts:
-                polygons = _geometry.union(p, polygons)
-            _surfaces[sid] = polygons #_make_optimized(polygons)
         else:
-            polygons = _geometry.remove(shape, polygons)
-            _surfaces[sid] = polygons #_make_optimized(polygons)
+            _geometry.remove(shape, _surfaces[sid])
     emit_signal('changed')
 
 func get_surfaces() -> Dictionary:
@@ -45,7 +42,5 @@ func get_surfaces() -> Dictionary:
 
 func remove(shape: PackedVector2Array):
     for sid in _surfaces:
-        var polygons = _surfaces[sid]
-        polygons = _geometry.remove(shape, polygons)
-        _surfaces[sid] = polygons #_make_optimized(polygons)
+        _geometry.remove(shape, _surfaces[sid])
     emit_signal('changed')
