@@ -5,8 +5,10 @@ signal changed
 var _size: int
 var _coords: Vector2
 var _surfaces: Dictionary
+var _geometry: WGGeometry
 
 func _init(coords: Vector2, size: int):
+    _geometry = WGGeometry.new()
     _coords = coords
     _size = size
 
@@ -31,11 +33,11 @@ func add_surface(surface_id:int, shape: PackedVector2Array):
         if surface_id==sid:
             var new_parts = _get_cutted_polygons(shape)
             for p in new_parts:
-                polygons = WGGeometryCore.union(p, polygons)
-            _surfaces[sid] = _make_optimized(polygons)
+                polygons = _geometry.union(p, polygons)
+            _surfaces[sid] = polygons #_make_optimized(polygons)
         else:
-            polygons = WGGeometryCore.remove(shape, polygons)
-            _surfaces[sid] = _make_optimized(polygons)
+            polygons = _geometry.remove(shape, polygons)
+            _surfaces[sid] = polygons #_make_optimized(polygons)
     emit_signal('changed')
 
 func get_surfaces() -> Dictionary:
@@ -44,8 +46,8 @@ func get_surfaces() -> Dictionary:
 func remove(shape: PackedVector2Array):
     for sid in _surfaces:
         var polygons = _surfaces[sid]
-        polygons = WGGeometryCore.remove(shape, polygons)
-        _surfaces[sid] = _make_optimized(polygons)
+        polygons = _geometry.remove(shape, polygons)
+        _surfaces[sid] = polygons #_make_optimized(polygons)
     emit_signal('changed')
 
 func _make_optimized(polygons: Array) -> Array:
