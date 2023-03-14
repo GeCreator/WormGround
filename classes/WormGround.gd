@@ -13,11 +13,23 @@ const CELL_SIZE: int = 200
             (canvas as WGCanvas).set_toolset(tool_set)
         notify_property_list_changed()
 
-var _data: Dictionary
+var _data: Array # main data storage
 
 var _cells: Dictionary
 var _canvases: Dictionary
 var _canvas_render_list: Array[WGCanvas] = []
+
+func _ready():
+    var points_count:=0
+    for d in _data:
+        var coords:Vector2 = d[0]
+        var type: int = d[1]
+        var id: int = d[2]
+        var data  = d[3]
+        var cell:=_get_cell(coords)
+        cell.add_data(type, id, data)
+        for s in data:
+            points_count += s.size()
 
 func add_surface(surface_id: int, shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
@@ -51,6 +63,7 @@ func _get_cell(coords: Vector2) -> WGCell:
     if _cells.has(id): return _cells[id]
     var cell = WGCell.new(coords, CELL_SIZE)
     cell.changed.connect(_get_canvas(coords).update.bind(cell))
+    cell.new_data.connect(_new_data)
     _cells[id] = cell
     return  _cells[id]
 
@@ -75,6 +88,9 @@ func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
     t = t.translated(transform.origin)
     return shape * t
 
+func _new_data(coords: Vector2, type: int, id:int, data):
+    _data.append([coords, type, id, data])
+
 func _on_canvas_changed(canvas: WGCanvas):
     _canvas_render_list.append(canvas)
 
@@ -87,7 +103,7 @@ func _get_property_list():
     return [
         {
         "name": "_data",
-        "type": TYPE_DICTIONARY,
+        "type": TYPE_ARRAY,
         "usage": PROPERTY_USAGE_STORAGE,
         }
     ]
