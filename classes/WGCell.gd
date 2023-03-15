@@ -1,9 +1,9 @@
 @tool
 class_name WGCell
 signal changed
-signal new_data(coords, type, id, data)
 
-const TYPE_SURFACE: int = 0
+const DATA_COORDS: int = 0
+const DATA_SURFACE: int = 1
 var _size: int
 var _coords: Vector2
 var _surfaces: Dictionary
@@ -26,19 +26,28 @@ func _get_cutted_polygons(shape: PackedVector2Array) -> Array[PackedVector2Array
     ])
     return Geometry2D.intersect_polygons(shape, cut_polygon)
 
-func add_data(type: int, id: int, data):
-    if type==TYPE_SURFACE:
-        if not _surfaces.has(id):
-            var v:Array[PackedVector2Array] = []
-            _surfaces[id] = data
-        emit_signal("changed")
-    print("add_data: unknow data type")
+## cell is empty and can be skipped on save
+func is_empty() -> bool:
+    return _surfaces.size()==0
+
+func get_data() -> Dictionary:
+    var result := {}
+    result[DATA_COORDS] = _coords
+    result[DATA_SURFACE] = _surfaces
+    return result
+
+func set_data(data: Dictionary):
+    for v in data[DATA_SURFACE]:
+        var n: Array[PackedVector2Array]
+        for a in data[DATA_SURFACE][v]:
+            n.append(a)
+        _surfaces[v] = n
+    emit_signal("changed")
 
 func add_surface(surface_id:int, shape: PackedVector2Array):
     if not _surfaces.has(surface_id):
         var v:Array[PackedVector2Array] = []
         _surfaces[surface_id] = v
-        new_data.emit(_coords, TYPE_SURFACE, surface_id, v)
     
     for sid in _surfaces:
         if surface_id==sid:
@@ -47,6 +56,7 @@ func add_surface(surface_id:int, shape: PackedVector2Array):
                 _geometry.union(p, _surfaces[sid])
         else:
             _geometry.remove(shape, _surfaces[sid])
+            if _surfaces[sid].size() == 0: _surfaces.erase(sid)
     emit_signal('changed')
 
 func get_surfaces() -> Dictionary:
@@ -55,4 +65,5 @@ func get_surfaces() -> Dictionary:
 func remove(shape: PackedVector2Array):
     for sid in _surfaces:
         _geometry.remove(shape, _surfaces[sid])
+        if _surfaces[sid].size() == 0: _surfaces.erase(sid)
     emit_signal('changed')

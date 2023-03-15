@@ -13,23 +13,38 @@ const CELL_SIZE: int = 200
             (canvas as WGCanvas).set_toolset(tool_set)
         notify_property_list_changed()
 
-var _data: Array # main data storage
+# Main data storage(packed to string)
+# var -> byte -> compress -> base64
+var _data: String
+# Main data(extracted)
+var _data_size: int
+var _data_is_modified: bool = false
 
 var _cells: Dictionary
 var _canvases: Dictionary
 var _canvas_render_list: Array[WGCanvas] = []
 
+func _notification(what):
+    # compress all data into string
+    if what == NOTIFICATION_EDITOR_PRE_SAVE and _data_is_modified:
+        _data_is_modified = false
+        var data: Array[Dictionary]
+        for c in _cells:
+            var cell = _cells[c]
+            if not cell.is_empty():
+                data.append(cell.get_data())
+        var buffer = var_to_bytes(data)
+        _data_size = buffer.size()
+        _data = Marshalls.raw_to_base64(buffer.compress(FileAccess.COMPRESSION_GZIP))
+
 func _ready():
-    var points_count:=0
-    for d in _data:
-        var coords:Vector2 = d[0]
-        var type: int = d[1]
-        var id: int = d[2]
-        var data  = d[3]
-        var cell:=_get_cell(coords)
-        cell.add_data(type, id, data)
-        for s in data:
-            points_count += s.size()
+    # extract all data from string
+    if _data_size>0:
+        var buffer := Marshalls.base64_to_raw(_data)
+        buffer = buffer.decompress(_data_size, FileAccess.COMPRESSION_GZIP)
+        var data = bytes_to_var(buffer)
+        for d in data:
+            _get_cell(d[WGCell.DATA_COORDS]).set_data(d)
 
 func add_surface(surface_id: int, shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
@@ -63,7 +78,6 @@ func _get_cell(coords: Vector2) -> WGCell:
     if _cells.has(id): return _cells[id]
     var cell = WGCell.new(coords, CELL_SIZE)
     cell.changed.connect(_get_canvas(coords).update.bind(cell))
-    cell.new_data.connect(_new_data)
     _cells[id] = cell
     return  _cells[id]
 
@@ -88,10 +102,8 @@ func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
     t = t.translated(transform.origin)
     return shape * t
 
-func _new_data(coords: Vector2, type: int, id:int, data):
-    _data.append([coords, type, id, data])
-
 func _on_canvas_changed(canvas: WGCanvas):
+    _data_is_modified = true
     _canvas_render_list.append(canvas)
 
 func _process(_delta: float):
@@ -102,8 +114,13 @@ func _process(_delta: float):
 func _get_property_list():
     return [
         {
-        "name": "_data",
-        "type": TYPE_ARRAY,
-        "usage": PROPERTY_USAGE_STORAGE,
+            name = "_data",
+            type = TYPE_STRING,
+            usage = PROPERTY_USAGE_STORAGE,
+        },
+        {
+            name = "_data_size",
+            type = TYPE_INT,
+            usage = PROPERTY_USAGE_STORAGE
         }
     ]

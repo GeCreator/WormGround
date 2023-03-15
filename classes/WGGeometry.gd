@@ -84,7 +84,7 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]):
         _normalize(clipped)
     shapes.append_array(clipped)
 
-func remove(remove:PackedVector2Array, shapes:Array):
+func remove(remove:PackedVector2Array, shapes:Array[PackedVector2Array]):
     remove = remove.duplicate()
     _snap_to_grid(remove)
     _clip_from_polygons(remove, shapes)
