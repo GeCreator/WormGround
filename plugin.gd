@@ -12,6 +12,7 @@ var _current_tool_id: int
 var _overlay: Control
 
 func _enter_tree():
+    scene_changed.connect(func(a): _is_in_edit_mode = false )
     _brush = WGBrush.new()
     _brush.draw.connect(_on_brush_draw)
     _brush.erase.connect(_on_brush_erase)
@@ -37,8 +38,8 @@ func _on_selection_changed():
         _diactivate_panel()
 
 func _forward_canvas_draw_over_viewport(overlay: Control):
-    if not _is_in_edit_mode and not is_instance_valid(_node): return false
-
+    if not _is_in_edit_mode: return false
+    
     var vt: Transform2D = _node.get_viewport_transform()
     var mouse_position: Vector2 = overlay.get_local_mouse_position()
     var pos_transform := Transform2D().translated(vt.get_origin()).inverse()
