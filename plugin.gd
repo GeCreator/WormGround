@@ -9,7 +9,6 @@ var _panel: Control
 var _panel_is_visible: bool = false
 var _current_tool
 var _current_tool_id: int
-var _overlay: Control
 
 func _enter_tree():
     scene_changed.connect(func(a): _is_in_edit_mode = false )
