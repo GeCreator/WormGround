@@ -15,6 +15,7 @@ func _enter_tree():
     _brush = WGBrush.new()
     _brush.draw.connect(_on_brush_draw)
     _brush.erase.connect(_on_brush_erase)
+    _brush.changed.connect(update_overlays)
     
     get_editor_interface().get_selection().selection_changed.connect(_on_selection_changed)
     var gui = get_editor_interface().get_base_control()
@@ -50,6 +51,9 @@ func _forward_canvas_gui_input(event) -> bool:
     if not _is_in_edit_mode: return false
     # ---------------------------------
     if (event is InputEventKey):
+        if event.keycode == KEY_SHIFT:
+            _brush.hold(event.is_pressed())
+            return true
         if event.keycode == KEY_ESCAPE:
             _is_in_edit_mode = false
             update_overlays()
@@ -61,7 +65,6 @@ func _forward_canvas_gui_input(event) -> bool:
     # ---------------------------------
     if (event is InputEventMouseMotion):
         _brush.update_position(_get_global_mouse_position(event.position))
-        update_overlays()
         return true
     return false
 
