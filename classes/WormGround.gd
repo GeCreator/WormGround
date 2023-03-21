@@ -12,6 +12,10 @@ const CELL_SIZE: int = 200
         for canvas in _canvases:
             (canvas as WGCanvas).set_toolset(tool_set)
         notify_property_list_changed()
+@export_subgroup("collision")
+@export_flags_2d_physics var layer: int = 1
+@export_flags_2d_physics var mask: int = 1
+@export var priority: float = 1
 
 # Main data storage(packed to string)
 # var -> byte -> compress -> base64
@@ -22,7 +26,9 @@ var _data_is_modified: bool = false
 
 var _cells: Dictionary
 var _canvases: Dictionary
+var _physics: Dictionary
 var _canvas_render_list: Array[WGCanvas] = []
+var _physics_update_list: Array[WGPhysic] = []
 
 func _notification(what):
     # compress all data into string
@@ -78,6 +84,7 @@ func _get_cell(coords: Vector2) -> WGCell:
     if _cells.has(id): return _cells[id]
     var cell = WGCell.new(coords, CELL_SIZE)
     cell.changed.connect(_get_canvas(coords).update.bind(cell))
+    cell.changed.connect(_get_physic(coords).update.bind(cell))
     _cells[id] = cell
     return  _cells[id]
 
@@ -91,6 +98,14 @@ func _get_canvas(cell_coords: Vector2) -> WGCanvas:
         canvas.changed.connect(_on_canvas_changed.bind(canvas))
         _canvases[canvas_id] = canvas
     return _canvases[canvas_id]
+
+func _get_physic(cell_coords: Vector2) -> WGPhysic:
+    var physic_bloc_id = WGUtils.make_cell_id(cell_coords, MAX_BLOCK_RANGE)
+    if not _physics.has(physic_bloc_id):
+        var physic := WGPhysic.new(get_world_2d().space, layer, mask, priority)
+        physic.changed.connect(_on_physics_changed.bind(physic))
+        _physics[physic_bloc_id] = physic
+    return _physics[physic_bloc_id]
 
 func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
     var t:=Transform2D()
@@ -106,10 +121,19 @@ func _on_canvas_changed(canvas: WGCanvas):
     _data_is_modified = true
     _canvas_render_list.append(canvas)
 
+func _on_physics_changed(physic: WGPhysic):
+    _data_is_modified = true
+    _physics_update_list.append(physic)
+
 func _process(_delta: float):
     while _canvas_render_list.size()>0:
         var canvas : WGCanvas = _canvas_render_list.pop_back()
         canvas.render()
+
+func _physics_process(delta):
+    while _physics_update_list.size()>0:
+        var physic : WGPhysic = _physics_update_list.pop_back()
+        physic.rebuild()
 
 func _get_property_list():
     return [

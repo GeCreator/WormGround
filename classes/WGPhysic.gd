@@ -14,6 +14,7 @@ func _init(space:RID, layer:int, mask:int, priority:float):
     PhysicsServer2D.body_set_collision_priority(_body, priority)
 
 func update(cell:WGCell):
+    _compiled_shapes.clear()
     var current: Dictionary
     for s in cell.get_physics_shapes():
         for ds in Geometry2D.decompose_polygon_in_convex(s):
