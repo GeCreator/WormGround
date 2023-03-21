@@ -13,12 +13,16 @@ signal draw(shape)
 signal erase(shape)
 signal changed # position/shape/size of brush changed
 
-func set_size(size:float):
-    _radius = size
-    changed.emit()
-
-
 func click(button: int, pressed: bool):
+    if button==MOUSE_BUTTON_WHEEL_UP and _is_hold:
+        _radius = clampf(_radius*1.02, 5.0, 500.0)
+        _build_shape()
+        return
+    if button==MOUSE_BUTTON_WHEEL_DOWN and _is_hold:
+        _radius = clampf(_radius*0.98, 5.0, 500.0)
+        _build_shape()
+        return
+        
     if button!=MOUSE_BUTTON_LEFT \
     && button!=MOUSE_BUTTON_RIGHT:
         return
