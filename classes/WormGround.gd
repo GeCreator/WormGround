@@ -9,8 +9,8 @@ const CELL_SIZE: int = 200
 @export var tool_set: WGToolSet:
     set(value):
         tool_set = value
-        for canvas in _canvases:
-            (canvas as WGCanvas).set_toolset(tool_set)
+        for k in _canvases:
+            (_canvases[k] as WGCanvas).set_toolset(tool_set)
         notify_property_list_changed()
 @export var level_data: WGLevelData:
     set(value):
