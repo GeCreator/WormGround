@@ -1,7 +1,11 @@
 class_name WGBrush
+const MIN_SIZE: float = 5.0
+const MAX_SIZE: float = 500.0
+const SCALE_STEP: float = 0.02
+
 var shape: PackedVector2Array
 
-var _radius: float = 15.0
+var _radius: float = 30.0
 var _vertexes: int = 12
 var _previous_position: Vector2
 var _current_position: Vector2
@@ -15,11 +19,11 @@ signal changed # position/shape/size of brush changed
 
 func click(button: int, pressed: bool):
     if button==MOUSE_BUTTON_WHEEL_UP and _is_hold:
-        _radius = clampf(_radius*1.02, 5.0, 500.0)
+        _radius = clampf(_radius*(1.0+SCALE_STEP), MIN_SIZE, MAX_SIZE)
         _build_shape()
         return
     if button==MOUSE_BUTTON_WHEEL_DOWN and _is_hold:
-        _radius = clampf(_radius*0.98, 5.0, 500.0)
+        _radius = clampf(_radius*(1.0-SCALE_STEP), MIN_SIZE, MAX_SIZE)
         _build_shape()
         return
         
@@ -70,7 +74,7 @@ func _make_polyline(from: Vector2, to: Vector2, radius: float, vertex_count: int
 
 func _make_circle(position: Vector2, radius: float, segments: int = 12) -> PackedVector2Array:
     var result : PackedVector2Array = []
-    var s: float = 2*PI/segments;
+    var s: float = TAU/segments;
     for i in range(0, segments+1):
         var x : float = position.x + cos(i*s) * radius
         var y : float = position.y + sin(i*s) * radius
