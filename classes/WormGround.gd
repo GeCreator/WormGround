@@ -12,17 +12,15 @@ const CELL_SIZE: int = 200
         for canvas in _canvases:
             (canvas as WGCanvas).set_toolset(tool_set)
         notify_property_list_changed()
+@export var level_data: WGLevelData:
+    set(value):
+        level_data = value
+        notify_property_list_changed()
+
 @export_subgroup("collision")
 @export_flags_2d_physics var layer: int = 1
 @export_flags_2d_physics var mask: int = 1
 @export var priority: float = 1
-
-# Main data storage(packed to string)
-# var -> byte -> compress -> base64
-var _data: String
-# Main data(extracted)
-var _data_size: int
-var _data_is_modified: bool = false
 
 var _cells: Dictionary
 var _canvases: Dictionary
@@ -30,27 +28,15 @@ var _physics: Dictionary
 var _canvas_render_list: Array[WGCanvas] = []
 var _physics_update_list: Array[WGPhysic] = []
 
-func _notification(what):
-    # compress all data into string
-    if what == NOTIFICATION_EDITOR_PRE_SAVE and _data_is_modified:
-        _data_is_modified = false
-        var data: Array[Dictionary]
-        for c in _cells:
-            var cell = _cells[c]
-            if not cell.is_empty():
-                data.append(cell.get_data())
-        var buffer = var_to_bytes(data)
-        _data_size = buffer.size()
-        _data = Marshalls.raw_to_base64(buffer.compress(FileAccess.COMPRESSION_GZIP))
-
 func _ready():
-    # extract all data from string
-    if _data_size>0:
-        var buffer := Marshalls.base64_to_raw(_data)
-        buffer = buffer.decompress(_data_size, FileAccess.COMPRESSION_GZIP)
-        var data = bytes_to_var(buffer)
-        for d in data:
+    if level_data!=null:
+        for d in level_data.get_data():
             _get_cell(d[WGCell.DATA_COORDS]).set_data(d)
+
+func _notification(what):
+    if what == NOTIFICATION_EDITOR_PRE_SAVE:
+        if level_data!=null:
+            level_data.save_changes(_cells)
 
 func add_surface(surface_id: int, shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
@@ -118,11 +104,11 @@ func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
     return shape * t
 
 func _on_canvas_changed(canvas: WGCanvas):
-    _data_is_modified = true
+    level_data.mark_as_modified()
     _canvas_render_list.append(canvas)
 
 func _on_physics_changed(physic: WGPhysic):
-    _data_is_modified = true
+    level_data.mark_as_modified()
     _physics_update_list.append(physic)
 
 func _process(_delta: float):
@@ -135,16 +121,4 @@ func _physics_process(delta):
         var physic : WGPhysic = _physics_update_list.pop_back()
         physic.rebuild()
 
-func _get_property_list():
-    return [
-        {
-            name = "_data",
-            type = TYPE_STRING,
-            usage = PROPERTY_USAGE_STORAGE,
-        },
-        {
-            name = "_data_size",
-            type = TYPE_INT,
-            usage = PROPERTY_USAGE_STORAGE
-        }
-    ]
+
