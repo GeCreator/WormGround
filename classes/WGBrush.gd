@@ -28,19 +28,22 @@ func click(button: int, pressed: bool):
         return
     _is_active = pressed
     _button = button
-    if _is_active: _do_event()
+    if not _is_active: _do_event()
 
 func update_position(pos:Vector2):
     _current_position = pos
     _build_shape()
     if _is_active:
-        if _previous_position.distance_to(_current_position)>(_radius/2):
-            _do_event()
-    else:
         if not _is_hold:
-            _previous_position = pos
+            if _previous_position.distance_to(_current_position)>(_radius/2):
+                _do_event()
+    else:
+        _previous_position = pos
+            
 
 func hold(pressed: bool):
+    if pressed:
+        _previous_position = _current_position
     _is_hold = pressed
 
 func _do_event():
@@ -53,7 +56,10 @@ func _do_event():
     _build_shape()
 
 func _build_shape() -> void:
-    shape = _make_polyline(_previous_position, _current_position, _radius, _vertexes)
+    if _is_active:
+        shape = _make_polyline(_previous_position, _current_position, _radius, _vertexes)
+    else:
+        shape = _make_circle(_current_position, _radius, _vertexes)
     changed.emit()
 
 func _make_polyline(from: Vector2, to: Vector2, radius: float, vertex_count: int = 10) -> PackedVector2Array:
