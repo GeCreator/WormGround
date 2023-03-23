@@ -74,8 +74,8 @@ func add_surface(surface_id:int, shape: PackedVector2Array):
             for p in new_parts:
                 _geometry.union(p, _surfaces[sid])
         else:
-            _geometry.remove(shape, _surfaces[sid])
-            if _surfaces[sid].size() == 0: _surfaces.erase(sid)
+            for p in new_parts:
+                _geometry.remove(p, _surfaces[sid])
     emit_signal('changed')
 
 func get_surfaces() -> Dictionary:
