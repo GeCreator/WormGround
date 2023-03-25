@@ -11,12 +11,13 @@ var _size: int
 var _coords: Vector2
 var _surfaces: Dictionary
 var _geometry: WGGeometry
-var _physics_shapes: Array[PackedVector2Array]
+var _physic: WGPhysic
 
-func _init(coords: Vector2, size: int):
-    _geometry = WGGeometry.new()
+func _init(coords: Vector2, size: int, physic: WGPhysic, geometry: WGGeometry):
+    _geometry = geometry
     _coords = coords
     _size = size
+    _physic = physic
 
 func _get_cutted_polygons(shape: PackedVector2Array) -> Array[PackedVector2Array]:
     var x = _coords.x * _size
@@ -40,13 +41,13 @@ func _add_hist(shape: PackedVector2Array, type: int):
 
 ## cell is empty and can be skipped on save
 func is_empty() -> bool:
-    return _surfaces.size()==0 and _physics_shapes.size()==0
+    return _surfaces.size()==0 and _physic.is_empty()
 
 func get_data() -> Dictionary:
     var result := {}
     result[DATA_COORDS] = _coords
     result[DATA_SURFACE] = _surfaces
-    result[DATA_PHYSIC] = _physics_shapes
+    result[DATA_PHYSIC] = _physic.get_shapes()
     return result
 
 func set_data(data: Dictionary):
@@ -55,19 +56,18 @@ func set_data(data: Dictionary):
         for a in data[DATA_SURFACE][v]:
             n.append(a)
         _surfaces[v] = n
-    for s in data[DATA_PHYSIC]:
-        _physics_shapes.append(s)
+    _physic.set_shapes(data[DATA_PHYSIC])
+    
     emit_signal("changed")
 
 func add_surface(surface_id:int, shape: PackedVector2Array):
-    #_add_hist(shape, 0)
+    _add_hist(shape, 0)
     if not _surfaces.has(surface_id):
         var v:Array[PackedVector2Array] = []
         _surfaces[surface_id] = v
     
     var new_parts = _get_cutted_polygons(shape)
-    for p in new_parts:
-        _geometry.union(p, _physics_shapes)
+    for p in new_parts: _physic.add(p)
     
     for sid in _surfaces:
         if surface_id==sid:
@@ -81,14 +81,10 @@ func add_surface(surface_id:int, shape: PackedVector2Array):
 func get_surfaces() -> Dictionary:
     return _surfaces
 
-func get_physics_shapes() -> Array[PackedVector2Array]:
-    return _physics_shapes
-
 func remove(shape: PackedVector2Array):
-    #_add_hist(shape, 1)
-    _geometry.remove(shape, _physics_shapes)
+    _add_hist(shape, 1)
+    _physic.remove(shape)
     
     for sid in _surfaces:
         _geometry.remove(shape, _surfaces[sid])
-        if _surfaces[sid].size() == 0: _surfaces.erase(sid)
     emit_signal('changed')

@@ -27,8 +27,10 @@ var _canvases: Dictionary
 var _physics: Dictionary
 var _canvas_render_list: Array[WGCanvas] = []
 var _physics_update_list: Array[WGPhysic] = []
+var _geometry: WGGeometry
 
 func _ready():
+    _geometry = WGGeometry.new()
     if level_data!=null:
         for d in level_data.get_data():
             _get_cell(d[WGCell.DATA_COORDS]).set_data(d)
@@ -68,9 +70,12 @@ func _get_cell(coords: Vector2) -> WGCell:
     
     var id = WGUtils.make_cell_id(coords, MAX_BLOCK_RANGE);
     if _cells.has(id): return _cells[id]
-    var cell = WGCell.new(coords, CELL_SIZE)
+    
+    var physic = WGPhysic.new(get_world_2d().space, layer, mask, priority, _geometry, transform)
+    physic.changed.connect(_on_physics_changed.bind(physic))
+    var cell = WGCell.new(coords, CELL_SIZE, physic, _geometry)
+    
     cell.changed.connect(_get_canvas(coords).update.bind(cell))
-    cell.changed.connect(_get_physic(coords).update.bind(cell))
     _cells[id] = cell
     return  _cells[id]
 
@@ -84,14 +89,6 @@ func _get_canvas(cell_coords: Vector2) -> WGCanvas:
         canvas.changed.connect(_on_canvas_changed.bind(canvas))
         _canvases[canvas_id] = canvas
     return _canvases[canvas_id]
-
-func _get_physic(cell_coords: Vector2) -> WGPhysic:
-    var physic_bloc_id = WGUtils.make_cell_id(cell_coords, MAX_BLOCK_RANGE)
-    if not _physics.has(physic_bloc_id):
-        var physic := WGPhysic.new(get_world_2d().space, layer, mask, priority)
-        physic.changed.connect(_on_physics_changed.bind(physic))
-        _physics[physic_bloc_id] = physic
-    return _physics[physic_bloc_id]
 
 func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
     var t:=Transform2D()
@@ -119,6 +116,6 @@ func _process(_delta: float):
 func _physics_process(delta):
     while _physics_update_list.size()>0:
         var physic : WGPhysic = _physics_update_list.pop_back()
-        physic.rebuild()
+        physic.update()
 
 
