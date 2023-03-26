@@ -38,7 +38,9 @@ func remove(shape: PackedVector2Array):
     _new_shapes.clear()
     for s in _shapes:
         var decomposed = Geometry2D.decompose_polygon_in_convex(s)
-        _new_shapes.append_array(decomposed)
+        for d in decomposed:
+            if d.size()>0:
+                _new_shapes.append(d)
     changed.emit()
 
 func update():
@@ -59,6 +61,14 @@ func get_shapes() -> Array[PackedVector2Array]:
 func set_shapes(shapes: Array):
     for shape in shapes:
         add(shape)
+
+func get_active_shapes() -> Array[PackedVector2Array]:
+    var result: Array[PackedVector2Array]
+    for i in PhysicsServer2D.body_get_shape_count(_body):
+        var shape = PhysicsServer2D.body_get_shape(_body, i)
+        var data:PackedVector2Array = PhysicsServer2D.shape_get_data(shape)
+        result.append(data)
+    return result
 
 func _remove_by_list(data, remove_list: PackedInt32Array):
     remove_list.sort()

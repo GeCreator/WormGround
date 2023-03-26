@@ -75,7 +75,9 @@ func _get_cell(coords: Vector2) -> WGCell:
     physic.changed.connect(_on_physics_changed.bind(physic))
     var cell = WGCell.new(coords, CELL_SIZE, physic, _geometry)
     
-    cell.changed.connect(_get_canvas(coords).update.bind(cell))
+    var canvas: WGCanvas = _get_canvas(coords)
+    cell.changed.connect(canvas.on_cell_changed.bind(cell))
+    physic.changed.connect(canvas.on_physic_changed.bind(physic))
     _cells[id] = cell
     return  _cells[id]
 
