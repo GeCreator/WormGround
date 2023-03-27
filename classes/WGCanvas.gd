@@ -45,9 +45,9 @@ func render():
             var surface = _used_surfaces[surface_id]
             _draw_surfaces(surface, surfaces[surface_id])
 
-    for p in _physics:
-        var shapes = (p as WGPhysic).get_active_shapes()
-        _draw_collision_shapes(shapes)
+#    for p in _physics:
+#        var shapes = (p as WGPhysic).get_active_shapes()
+#        _draw_collision_shapes(shapes)
 
 func _draw_surfaces(surface: WGSurface, polygons: Array):
     var size := surface.get_size()
