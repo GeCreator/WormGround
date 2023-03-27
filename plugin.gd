@@ -38,7 +38,10 @@ func _on_selection_changed():
         _diactivate_panel()
 
 func _forward_canvas_draw_over_viewport(overlay: Control):
-    if not _is_in_edit_mode: return false
+    if not _is_in_edit_mode:
+        overlay.mouse_default_cursor_shape = Control.CURSOR_ARROW
+        return false
+    overlay.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
     
     var vt: Transform2D = _node.get_viewport_transform()
     var mouse_position: Vector2 = overlay.get_local_mouse_position()
