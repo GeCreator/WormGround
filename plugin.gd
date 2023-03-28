@@ -138,6 +138,7 @@ func _on_ui_action(action: String, value):
         _: print(action,": ", value)
 
 func _update_bottom_panel():
+    _node.update_configuration_warnings()
     _tool_set = _node.tool_set
     _bottom_panel.set_toolset(_tool_set)
 

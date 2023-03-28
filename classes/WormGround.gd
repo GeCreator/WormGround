@@ -120,4 +120,8 @@ func _physics_process(delta):
         var physic : WGPhysic = _physics_update_list.pop_back()
         physic.update()
 
-
+func _get_configuration_warnings() -> PackedStringArray:
+    var result: PackedStringArray
+    if tool_set==null: return ['ToolSet required to draw stuffs']
+    if level_data==null: return ['LevelData required to save stuffs']
+    return []
