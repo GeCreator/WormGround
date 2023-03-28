@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://ddaymmnne0an3"]
+[gd_scene load_steps=2 format=3 uid="uid://c435xseofmwty"]
 
-[ext_resource type="Script" path="res://addons/worm_ground/scenes/ToolSetPanel.gd" id="1_3417a"]
+[ext_resource type="Script" path="res://addons/worm_ground/scenes/bottom_panel/bottom_panels.gd" id="1_ub30s"]
 
-[node name="ToolSetPanel" type="Control"]
+[node name="bottom_panel" type="Control"]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 3
 anchors_preset = 15
@@ -10,7 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_3417a")
+script = ExtResource("1_ub30s")
 
 [node name="panel" type="TabContainer" parent="."]
 custom_minimum_size = Vector2(0, 200)

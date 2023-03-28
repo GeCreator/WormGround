@@ -26,7 +26,7 @@ func _enter_tree():
     add_custom_type("WormGround", "Node2D", preload("classes/WormGround.gd"), icon)
     
     _tool_buttons = _make_ui_element(preload("./scenes/editor_menu/editor_menu.tscn"))
-    _bottom_panel = _make_ui_element(preload("./scenes/ToolSetPanel.tscn"))
+    _bottom_panel = _make_ui_element(preload("./scenes/bottom_panel/bottom_panel.tscn"))
 
 func _on_selection_changed():
     var selected: Array = get_editor_interface().get_selection().get_selected_nodes()

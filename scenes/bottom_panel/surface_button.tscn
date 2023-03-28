@@ -1,6 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://b22wgvat43e4x"]
+[gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://addons/worm_ground/scenes/surface_button.gd" id="1_0ilmf"]
+[ext_resource type="Script" path="res://addons/worm_ground/scenes/bottom_panel/surface_button.gd" id="1_0ilmf"]
 [ext_resource type="Texture2D" uid="uid://cjmc8jmy4qvtw" path="res://assets/rock.png" id="2_inbwk"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wa2y7"]
