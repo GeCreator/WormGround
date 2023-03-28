@@ -1,21 +1,30 @@
 @tool
-extends TabContainer
+extends Control
 signal action(name, value)
 
 var _tool_set: WGToolSet
 var SurfaceButton: PackedScene = preload("surface_button.tscn")
 var _previous_surface_button_selected = null
 
+
 func show_error(text: String):
     OS.alert(text)
 
-func set_tool_set(toolset: WGToolSet):
-    _tool_set = toolset
-    if not _tool_set.changed.is_connected(_refresh):
-        _tool_set.changed.connect(_refresh)
+func set_toolset(toolset):
+    # disconnect from previous
+    if _tool_set!=null and _tool_set.changed.is_connected(_refresh):
+        _tool_set.changed.disconnect(_refresh)
+    # connect to new
+    if toolset!=null and not toolset.changed.is_connected(_refresh):
+        toolset.changed.connect(_refresh)
+    if _tool_set!=toolset:
+        _tool_set = toolset
         _refresh()
 
 func _refresh():
+    if _tool_set == null:
+        $info.show(); $panel.hide(); return
+    $info.hide(); $panel.show()
     _clear_children($"%SurfaceContainer")
     var surfaces = _tool_set.get_surfaces()
     for id in surfaces:
@@ -34,11 +43,13 @@ func _clear_children(node: Node):
         c.queue_free()
 
 func _on_create_surface_pressed():
-    action.emit('create_surface', null)
+    action.emit('surface_create', null)
 
 func _on_surface_button_selected(button: Node):
     if _previous_surface_button_selected!=null:
         _previous_surface_button_selected.unselect()
     _previous_surface_button_selected = button
-    action.emit('tool_selected', {id=button.get_id(), tool=button.get_surface()})
-    
+    action.emit('surface_select', button.get_id())
+
+func _on_visibility_changed():
+    emit_signal("action","panel_visibility_changed", visible)

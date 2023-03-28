@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://8cf48xca1yrc"]
+
+[ext_resource type="Script" path="res://addons/worm_ground/scenes/editor_menu/editor_menu.gd" id="1_6m7fe"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2afou"]
+content_margin_left = 6.0
+content_margin_right = 6.0
+
+[node name="editor_menu" type="HBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6m7fe")
+
+[node name="edit" type="Button" parent="."]
+layout_mode = 2
+tooltip_text = "Edit Surface
+LMB: draw surface
+RMB: erase surface
+SHIFT+LMB/RMB: line mode"
+theme_override_styles/normal = SubResource("StyleBoxEmpty_2afou")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_2afou")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_2afou")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_2afou")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_2afou")
+
+[connection signal="pressed" from="edit" to="." method="_on_edit_pressed"]

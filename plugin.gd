@@ -1,17 +1,20 @@
 @tool
 extends EditorPlugin
 
-
+var _is_handle: bool = false
 var _is_in_edit_mode: bool = false
+var _bottom_panel_is_created: bool = false
+var _bottom_panel_visibility: bool = false
+var _in_canvas: bool = false
+
 var _brush: WGBrush
 var _node: WormGround
-var _panel: Control
-var _panel_is_visible: bool = false
-var _current_tool
-var _current_tool_id: int
+var _bottom_panel: Control
+var _tool_buttons: HBoxContainer
+var _current_surface: int
+var _tool_set: WGToolSet
 
 func _enter_tree():
-    scene_changed.connect(func(a): _is_in_edit_mode = false )
     _brush = WGBrush.new()
     _brush.draw.connect(_on_brush_draw)
     _brush.erase.connect(_on_brush_erase)
@@ -22,23 +25,36 @@ func _enter_tree():
     var icon = gui.get_theme_icon("SphereShape3D", "EditorIcons")
     add_custom_type("WormGround", "Node2D", preload("classes/WormGround.gd"), icon)
     
-    _panel = preload("./scenes/ToolSetPanel.tscn").instantiate()
-    _panel.connect('action', _on_panel_action)
+    _tool_buttons = _make_ui_element(preload("./scenes/editor_menu/editor_menu.tscn"))
+    _bottom_panel = _make_ui_element(preload("./scenes/ToolSetPanel.tscn"))
 
 func _on_selection_changed():
     var selected: Array = get_editor_interface().get_selection().get_selected_nodes()
-    if selected.size()==1 and selected[0] is WormGround:
+    _is_handle = selected.size()==1 and selected[0] is WormGround
+    if _is_handle:
         _node = selected[0]
-        if not _node.property_list_changed.is_connected(_check_tool_set):
-            _node.property_list_changed.connect(_check_tool_set)
-        _check_tool_set()
+        
+        if not _node.property_list_changed.is_connected(_update_bottom_panel):
+            _node.property_list_changed.connect(_update_bottom_panel)
+        _activate_ui()
+        _update_bottom_panel()
     else:
-        _is_in_edit_mode = false
-        _node = null
-        _diactivate_panel()
+        if _node!=null and _node.property_list_changed.is_connected(_update_bottom_panel):
+            _node.property_list_changed.disconnect(_update_bottom_panel)
+            _is_in_edit_mode = false
+            _node = null
+            _diactivate_ui()
+
+func _cavas_mouse_entered(entered: bool):
+    _in_canvas = entered
 
 func _forward_canvas_draw_over_viewport(overlay: Control):
-    if not _is_in_edit_mode:
+    # only for fix error(when switch tabs)
+    if not overlay.is_connected("mouse_exited", _cavas_mouse_entered):
+        overlay.connect("mouse_entered", _cavas_mouse_entered.bind(true))
+        overlay.connect("mouse_exited", _cavas_mouse_entered.bind(false))
+        
+    if not _in_canvas || not _is_in_edit_mode:
         overlay.mouse_default_cursor_shape = Control.CURSOR_ARROW
         return false
     overlay.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -77,50 +93,61 @@ func _get_global_mouse_position(screen_point: Vector2) -> Vector2:
 
 func _on_brush_draw(shape: PackedVector2Array):
     if not _is_in_edit_mode: return
-    if _current_tool is WGSurface:
-        _node.add_surface(_current_tool_id, shape)
+    _node.add_surface(_current_surface, shape)
 
 func _on_brush_erase(shape: PackedVector2Array):
     if not _is_in_edit_mode: return
-    if _current_tool is WGSurface:
-        _node.remove_surface(shape)
+    _node.remove_surface(shape)
 
 func _handles(object) -> bool:
-    return _is_in_edit_mode
+    return _is_handle
 
-func _activate_panel():
-    if _panel_is_visible: return
-    _panel_is_visible = true
-    add_control_to_bottom_panel(_panel,'WormGround')
-    make_bottom_panel_item_visible(_panel)
+func _activate_ui():
+    if _bottom_panel_is_created: return
+    _bottom_panel_is_created = true
+    add_control_to_bottom_panel(_bottom_panel, 'WormGround')
+    add_control_to_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _tool_buttons)
+    if _bottom_panel_visibility:
+        make_bottom_panel_item_visible(_bottom_panel)
 
-func _diactivate_panel():
-    _panel_is_visible = false
-    remove_control_from_bottom_panel(_panel)
+func _diactivate_ui():
+    if not _bottom_panel_is_created: return
+    _bottom_panel_is_created = false
+    remove_control_from_bottom_panel(_bottom_panel)
+    remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _tool_buttons)
 
-func _on_panel_action(action: String, value):
+func _on_ui_action(action: String, value):
+    
     match(action):
-        'create_surface':
-            var surface := WGSurface.new()
-            _node.tool_set.add_surface(surface)
-            get_editor_interface().edit_resource(surface)
-        'tool_selected':
+        "tool_brush":
+            _is_in_edit_mode = _current_surface>0
+        "panel_visibility_changed":
+            if _node!=null:
+                _bottom_panel_visibility = value
+        'surface_create':
             _is_in_edit_mode = true
-            _current_tool = value["tool"]
-            _current_tool_id = value["id"]
-            get_editor_interface().edit_resource(_current_tool)
-        _: print('unknow panel action')
+            var surface := WGSurface.new()
+            _current_surface = _tool_set.add_surface(surface)
+            get_editor_interface() \
+                .edit_resource(surface)
+        'surface_select':
+            _is_in_edit_mode = true
+            _current_surface = int(value)
+            get_editor_interface() \
+                .edit_resource(_tool_set.get_surface(_current_surface))
+        _: print(action,": ", value)
 
-func _check_tool_set():
-    if _node.tool_set is WGToolSet:
-        _panel.set_tool_set(_node.tool_set)
-        _activate_panel()
-    else:
-        _diactivate_panel()
+func _update_bottom_panel():
+    _tool_set = _node.tool_set
+    _bottom_panel.set_toolset(_tool_set)
 
 func _exit_tree():
+    _diactivate_ui()
+    _bottom_panel.queue_free()
+    _tool_buttons.queue_free()
     remove_custom_type("WormGround")
-    _diactivate_panel()
-    _panel.queue_free()
 
-
+func _make_ui_element(scene: PackedScene):
+    var ui = scene.instantiate()
+    ui.connect('action', _on_ui_action)
+    return ui
