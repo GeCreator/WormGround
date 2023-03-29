@@ -29,7 +29,7 @@ func _debug_rotate_shape(shape: PackedVector2Array, offset: int):
 func _debug(shapes:Array[PackedVector2Array], text: String):
     for s in shapes:
         for p in s:
-            if p.abs().length()>100000:
+            if p.abs().length()>CUT_LINE_SIZE:
                 print("Infinity point %s" % text)
                 print('dump: ', str(s).replace("(","Vector2("))
                 s.clear()

@@ -6,7 +6,6 @@ const DATA_COORDS: int = 0
 const DATA_SURFACE: int = 1
 const DATA_PHYSIC: int = 2
 
-var _debug_history: Array
 var _size: int
 var _coords: Vector2
 var _surfaces: Dictionary
@@ -31,14 +30,6 @@ func _get_cutted_polygons(shape: PackedVector2Array) -> Array[PackedVector2Array
     ])
     return Geometry2D.intersect_polygons(shape, cut_polygon)
 
-func _add_hist(shape: PackedVector2Array, type: int):
-    var hist = []
-    if _surfaces.size()>0:
-        for s in _surfaces.values()[0]:
-            hist.append(s.duplicate())
-    if _debug_history.size()>100: _debug_history.pop_front()
-    _debug_history.append([type, _get_cutted_polygons(shape), hist])
-
 ## cell is empty and can be skipped on save
 func is_empty() -> bool:
     return _surfaces.size()==0 and _physic.is_empty()
@@ -61,7 +52,6 @@ func set_data(data: Dictionary):
     emit_signal("changed")
 
 func add_surface(surface_id:int, shape: PackedVector2Array):
-    _add_hist(shape, 0)
     if not _surfaces.has(surface_id):
         var v:Array[PackedVector2Array] = []
         _surfaces[surface_id] = v
@@ -82,7 +72,6 @@ func get_surfaces() -> Dictionary:
     return _surfaces
 
 func remove(shape: PackedVector2Array):
-    _add_hist(shape, 1)
     _physic.remove(shape)
     
     for sid in _surfaces:
