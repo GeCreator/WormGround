@@ -32,7 +32,6 @@ var _geometry_physic: WGGeometry
 
 func _ready():
     _geometry = WGGeometry.new( false )
-    _geometry_physic = WGGeometry.new( false )
     if level_data!=null:
         for d in level_data.get_data():
             _get_cell(d[WGCell.DATA_COORDS]).set_data(d)
@@ -75,7 +74,7 @@ func _get_cell(coords: Vector2) -> WGCell:
     
     var physic = WGPhysic.new( \
     get_world_2d().space, layer, mask,\
-    priority, _geometry_physic, transform)
+    priority, transform)
     physic.changed.connect(_on_physics_changed.bind(physic))
     var cell = WGCell.new(coords, CELL_SIZE, physic)
     

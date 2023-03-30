@@ -55,7 +55,7 @@ func add_surface(surface_id:int, shape: PackedVector2Array, geometry: WGGeometry
         _surfaces[surface_id] = v
     
     var new_parts = _get_cutted_polygons(shape)
-    for p in new_parts: _physic.add(p)
+    for p in new_parts: _physic.add(p, geometry)
     
     for sid in _surfaces:
         if surface_id==sid:
@@ -70,7 +70,7 @@ func get_surfaces() -> Dictionary:
     return _surfaces
 
 func remove(shape: PackedVector2Array, geometry: WGGeometry):
-    _physic.remove(shape)
+    _physic.remove(shape, geometry)
     
     for sid in _surfaces:
         geometry.remove(shape, _surfaces[sid])

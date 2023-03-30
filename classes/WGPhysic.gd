@@ -5,16 +5,14 @@ var _shapes: Array[PackedVector2Array]
 var _updated: bool = true
 var _body: RID
 var _is_enabled: bool = false
-var _geometry: WGGeometry
 var _insert_index: int = -1
 var _transform: Transform2D
 
 
-func _init(space:RID, layer:int, mask:int, priority:float, geometry: WGGeometry, tranform: Transform2D):
+func _init(space:RID, layer:int, mask:int, priority:float, transform: Transform2D):
     _is_enabled = layer>0 or mask>0
     if not _is_enabled: return
-    _geometry = geometry
-    _transform = tranform
+    _transform = transform
     _body = PhysicsServer2D.body_create()
     PhysicsServer2D.body_set_mode(_body, PhysicsServer2D.BODY_MODE_STATIC)
     PhysicsServer2D.body_set_space(_body, space)
@@ -23,18 +21,18 @@ func _init(space:RID, layer:int, mask:int, priority:float, geometry: WGGeometry,
     PhysicsServer2D.body_set_collision_mask(_body, mask)
     PhysicsServer2D.body_set_collision_priority(_body, priority)
 
-func add(shape: PackedVector2Array):
+func add(shape: PackedVector2Array, geometry: WGGeometry):
     _updated = false
-    _geometry.union(shape, _shapes)
+    geometry.union(shape, _shapes)
     _new_shapes.clear()
     for s in _shapes:
         var decomposed = Geometry2D.decompose_polygon_in_convex(s)
         _new_shapes.append_array(decomposed)
     changed.emit()
 
-func remove(shape: PackedVector2Array):
+func remove(shape: PackedVector2Array, geometry: WGGeometry):
     _updated = false
-    _geometry.remove(shape, _shapes)
+    geometry.remove(shape, _shapes)
     _new_shapes.clear()
     for s in _shapes:
         var decomposed = Geometry2D.decompose_polygon_in_convex(s)
@@ -59,8 +57,11 @@ func get_shapes() -> Array[PackedVector2Array]:
     return _shapes
 
 func set_shapes(shapes: Array):
-    for shape in shapes:
-        add(shape)
+    _new_shapes.clear()
+    for s in shapes:
+        var decomposed = Geometry2D.decompose_polygon_in_convex(s)
+        _new_shapes.append_array(decomposed)
+    changed.emit()
 
 func get_active_shapes() -> Array[PackedVector2Array]:
     var result: Array[PackedVector2Array]
