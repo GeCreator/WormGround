@@ -9,11 +9,9 @@ const DATA_PHYSIC: int = 2
 var _size: int
 var _coords: Vector2
 var _surfaces: Dictionary
-var _geometry: WGGeometry
 var _physic: WGPhysic
 
-func _init(coords: Vector2, size: int, physic: WGPhysic, geometry: WGGeometry):
-    _geometry = geometry
+func _init(coords: Vector2, size: int, physic: WGPhysic):
     _coords = coords
     _size = size
     _physic = physic
@@ -51,7 +49,7 @@ func set_data(data: Dictionary):
     
     emit_signal("changed")
 
-func add_surface(surface_id:int, shape: PackedVector2Array):
+func add_surface(surface_id:int, shape: PackedVector2Array, geometry: WGGeometry):
     if not _surfaces.has(surface_id):
         var v:Array[PackedVector2Array] = []
         _surfaces[surface_id] = v
@@ -62,18 +60,18 @@ func add_surface(surface_id:int, shape: PackedVector2Array):
     for sid in _surfaces:
         if surface_id==sid:
             for p in new_parts:
-                _geometry.union(p, _surfaces[sid])
+                geometry.union(p, _surfaces[sid])
         else:
             for p in new_parts:
-                _geometry.remove(p, _surfaces[sid])
+                geometry.remove(p, _surfaces[sid])
     emit_signal('changed')
 
 func get_surfaces() -> Dictionary:
     return _surfaces
 
-func remove(shape: PackedVector2Array):
+func remove(shape: PackedVector2Array, geometry: WGGeometry):
     _physic.remove(shape)
     
     for sid in _surfaces:
-        _geometry.remove(shape, _surfaces[sid])
+        geometry.remove(shape, _surfaces[sid])
     emit_signal('changed')

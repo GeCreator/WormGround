@@ -28,9 +28,11 @@ var _physics: Dictionary
 var _canvas_render_list: Array[WGCanvas] = []
 var _physics_update_list: Array[WGPhysic] = []
 var _geometry: WGGeometry
+var _geometry_physic: WGGeometry
 
 func _ready():
-    _geometry = WGGeometry.new()
+    _geometry = WGGeometry.new( false )
+    _geometry_physic = WGGeometry.new( false )
     if level_data!=null:
         for d in level_data.get_data():
             _get_cell(d[WGCell.DATA_COORDS]).set_data(d)
@@ -44,13 +46,13 @@ func add_surface(surface_id: int, shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
-        cell.add_surface(surface_id, shape)
+        cell.add_surface(surface_id, shape, _geometry)
 
 func remove_surface(shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
     var cells: Array[WGCell] = _get_affected_cells(shape)
     for cell in cells:
-        cell.remove(shape)
+        cell.remove(shape, _geometry)
 
 func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
     var result: Array[WGCell]
@@ -71,9 +73,11 @@ func _get_cell(coords: Vector2) -> WGCell:
     var id = WGUtils.make_cell_id(coords, MAX_BLOCK_RANGE);
     if _cells.has(id): return _cells[id]
     
-    var physic = WGPhysic.new(get_world_2d().space, layer, mask, priority, _geometry, transform)
+    var physic = WGPhysic.new( \
+    get_world_2d().space, layer, mask,\
+    priority, _geometry_physic, transform)
     physic.changed.connect(_on_physics_changed.bind(physic))
-    var cell = WGCell.new(coords, CELL_SIZE, physic, _geometry)
+    var cell = WGCell.new(coords, CELL_SIZE, physic)
     
     var canvas: WGCanvas = _get_canvas(coords)
     cell.changed.connect(canvas.on_cell_changed.bind(cell))
