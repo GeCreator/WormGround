@@ -24,7 +24,6 @@ func _init(space:RID, layer:int, mask:int, priority:float, transform: Transform2
 func add(shape: PackedVector2Array, geometry: WGGeometry):
     _updated = false
     geometry.union(shape, _shapes)
-    _new_shapes.clear()
     for s in _shapes:
         var decomposed = Geometry2D.decompose_polygon_in_convex(s)
         _new_shapes.append_array(decomposed)
@@ -33,7 +32,6 @@ func add(shape: PackedVector2Array, geometry: WGGeometry):
 func remove(shape: PackedVector2Array, geometry: WGGeometry):
     _updated = false
     geometry.remove(shape, _shapes)
-    _new_shapes.clear()
     for s in _shapes:
         var decomposed = Geometry2D.decompose_polygon_in_convex(s)
         for d in decomposed:
@@ -48,6 +46,7 @@ func update():
         var shape = PhysicsServer2D.convex_polygon_shape_create()
         PhysicsServer2D.shape_set_data(shape, s)
         PhysicsServer2D.body_add_shape(_body, shape, _transform)
+    _new_shapes.clear()
     _updated = true
 
 func is_empty() -> bool:
@@ -57,8 +56,9 @@ func get_shapes() -> Array[PackedVector2Array]:
     return _shapes
 
 func set_shapes(shapes: Array):
-    _new_shapes.clear()
+    _updated = false
     for s in shapes:
+        _shapes.append(s)
         var decomposed = Geometry2D.decompose_polygon_in_convex(s)
         _new_shapes.append_array(decomposed)
     changed.emit()
