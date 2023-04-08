@@ -39,13 +39,13 @@ func get_data() -> Dictionary:
     result[DATA_PHYSIC] = _physic.get_shapes()
     return result
 
-func set_data(data: Dictionary):
+func set_data(data: Dictionary, geometry: WGGeometry):
     for v in data[DATA_SURFACE]:
         var n: Array[PackedVector2Array]
         for a in data[DATA_SURFACE][v]:
             n.append(a)
         _surfaces[v] = n
-    _physic.set_shapes(data[DATA_PHYSIC])
+    _physic.set_shapes(data[DATA_PHYSIC], geometry)
     
     emit_signal("changed")
 

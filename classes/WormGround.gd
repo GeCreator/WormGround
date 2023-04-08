@@ -34,7 +34,7 @@ func _ready():
     _geometry = WGGeometry.new( false )
     if level_data!=null:
         for d in level_data.get_data():
-            _get_cell(d[WGCell.DATA_COORDS]).set_data(d)
+            _get_cell(d[WGCell.DATA_COORDS]).set_data(d, _geometry)
 
 func _notification(what):
     if what == NOTIFICATION_EDITOR_PRE_SAVE:
