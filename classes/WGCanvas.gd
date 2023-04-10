@@ -36,7 +36,6 @@ static func _draw_surfaces(canvas: RID, surface: WGSurface, polygons: Array):
     var size := surface.get_size()
     var colors := PackedColorArray([surface.color])
     for polygon in polygons:
-        #colors = PackedColorArray([_get_next_debug_color()])
         var uvs: PackedVector2Array
         for p in polygon:
             var a: Vector2 = p / size * surface.scale
