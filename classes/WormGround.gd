@@ -3,6 +3,7 @@
 class_name WormGround extends Node2D
 const MAX_BLOCK_RANGE: int = 10000
 const CELL_SIZE: int = 200
+const DRAW_PER_FRAME: int = 10
 
 @export_category("WormGround")
 
@@ -11,11 +12,11 @@ const CELL_SIZE: int = 200
         tool_set = value
         for k in _canvases:
             (_canvases[k] as WGCanvas).set_toolset(tool_set)
-        notify_property_list_changed()
+        notify_property_list_changed() # required by plugin
 @export var level_data: WGLevelData:
     set(value):
         level_data = value
-        notify_property_list_changed()
+        notify_property_list_changed() # required by plugin
 
 @export_subgroup("collision")
 @export_flags_2d_physics var layer: int = 1
@@ -56,6 +57,9 @@ func remove_surface(shape: PackedVector2Array):
     for cell in cells:
         WGCell.remove(cell, shape, _geometry)
     _cells_changed(cells)
+
+func redraw():
+    _canvas_render_list = _canvases.duplicate()
 
 func _cells_changed(cells: Array):
     level_data.mark_as_modified()
@@ -120,12 +124,18 @@ func _process(_delta: float):
     # wait for physics update
     if _physics_update_list.size()>0: return
     # update canvas
-    while _canvas_render_list.size()>0:
-        for key in _canvas_render_list:
-            var canvas: Array = _canvas_render_list[key]
-            WGCanvas.render(canvas, tool_set)
-            WGCanvas.render_debug(canvas, _physics)
-        _canvas_render_list.clear()
+    var bbb:= randi()%2==0
+            
+    var limit: int = DRAW_PER_FRAME
+    var remove_list: PackedInt32Array
+    for key in _canvas_render_list:
+        remove_list.append(key)
+        var canvas: Array = _canvas_render_list[key]
+        WGCanvas.render(canvas, tool_set)
+        WGCanvas.render_debug(canvas, _physics)
+        limit -=1
+        if limit<=0: break
+    for key in remove_list: _canvas_render_list.erase(key)
 
 func _physics_process(delta):
     while _physics_update_list.size()>0:

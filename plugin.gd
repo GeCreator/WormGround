@@ -34,13 +34,13 @@ func _on_selection_changed():
     if _is_handle:
         _node = selected[0]
         
-        if not _node.property_list_changed.is_connected(_update_bottom_panel):
-            _node.property_list_changed.connect(_update_bottom_panel)
+        if not _node.property_list_changed.is_connected(_on_property_list_changed):
+            _node.property_list_changed.connect(_on_property_list_changed)
         _activate_ui()
-        _update_bottom_panel()
+        _on_property_list_changed()
     else:
-        if _node!=null and _node.property_list_changed.is_connected(_update_bottom_panel):
-            _node.property_list_changed.disconnect(_update_bottom_panel)
+        if _node!=null and _node.property_list_changed.is_connected(_on_property_list_changed):
+            _node.property_list_changed.disconnect(_on_property_list_changed)
             _is_in_edit_mode = false
             _node = null
             _diactivate_ui()
@@ -137,10 +137,12 @@ func _on_ui_action(action: String, value):
                 .edit_resource(_tool_set.get_surface(_current_surface))
         _: print(action,": ", value)
 
-func _update_bottom_panel():
+func _on_property_list_changed():
     _node.update_configuration_warnings()
     _tool_set = _node.tool_set
     _bottom_panel.set_toolset(_tool_set)
+    if not _tool_set.is_connected("changed", _node.redraw):
+        _tool_set.connect("changed", _node.redraw)
 
 func _exit_tree():
     _diactivate_ui()

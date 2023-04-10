@@ -21,6 +21,8 @@ func get_surfaces() -> Dictionary:
     return _surfaces
 
 func get_surface(id: int) -> WGSurface:
+    if not _surfaces[id].is_connected("changed", emit_changed):
+        _surfaces[id].connect("changed", emit_changed)
     return _surfaces[id]
 
 func _get_insert_id(d: Dictionary) -> int:
