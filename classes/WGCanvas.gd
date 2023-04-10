@@ -1,55 +1,38 @@
 @tool
 class_name WGCanvas
-signal changed
 
-var _canvas: RID
-var _tool_set: WGToolSet
-var _cells: Dictionary
-var _physics: Dictionary
+const DATA_CANVAS: int = 0
+const DATA_CELLS: int = 1
 
-var _brush: WGSurface
-var _polygons: Array[PackedVector2Array]
-var _rendered: bool = true
-var _used_surfaces: Dictionary
+static func create(base: RID) -> Array:
+    var canvas = RenderingServer.canvas_item_create()
+    RenderingServer.canvas_item_set_parent(canvas, base)
+    RenderingServer.canvas_item_set_default_texture_repeat(canvas, RenderingServer.CANVAS_ITEM_TEXTURE_REPEAT_ENABLED)
+    var result: Array
+    result.resize(2)
+    result[DATA_CANVAS] = canvas
+    result[DATA_CELLS] = []
+    return result
 
-func _init(base_canvas: RID):
-    _canvas = RenderingServer.canvas_item_create()
-    RenderingServer.canvas_item_set_parent(_canvas, base_canvas)
-    RenderingServer.canvas_item_set_default_texture_repeat(_canvas, RenderingServer.CANVAS_ITEM_TEXTURE_REPEAT_ENABLED)
-    #RenderingServer.canvas_item_set_default_texture_filter(_canvas, RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_NEAREST)
-
-func set_toolset(tool_set: WGToolSet):
-    _tool_set = tool_set
-    render()
-
-func on_cell_changed(cell: WGCell):
-    if not _cells.has(cell):
-        _cells[cell] = cell
-    emit_changed()
-
-func on_physic_changed(physic: WGPhysic):
-    if not _physics.has(physic):
-        _physics[physic] = physic
-    emit_changed()
-
-func render():
-    if _rendered: return
-    _rendered = true
-    RenderingServer.canvas_item_clear(_canvas)
-    for c in _cells:
-        var surfaces = (c as WGCell).get_surfaces()
+static func render(canvas_data: Array, toolset: WGToolSet):
+    var canvas :RID = canvas_data[DATA_CANVAS]
+    var cells :Array = canvas_data[DATA_CELLS]
+    RenderingServer.canvas_item_clear(canvas)
+    for c in cells:
+        var surfaces = c[WGCell.DATA_SURFACE]
         for surface_id in surfaces:
-            if not _used_surfaces.has(surface_id):
-                _used_surfaces[surface_id] = _tool_set.get_surface(surface_id)
-                (_used_surfaces[surface_id] as WGSurface).changed.connect(emit_changed)
-            var surface = _used_surfaces[surface_id]
-            _draw_surfaces(surface, surfaces[surface_id])
+            var surface = toolset.get_surface(surface_id)
+            _draw_surfaces(canvas, surface, surfaces[surface_id])
 
-#    for p in _physics:
-#        var shapes = (p as WGPhysic).get_active_shapes()
-#        _draw_collision_shapes(shapes)
+static func render_debug(canvas_data: Array, physics: Dictionary):
+    var cells :Array = canvas_data[DATA_CELLS]
+    var canvas: RID = canvas_data[DATA_CANVAS]
+    for cell in cells:
+        var id = WGCell.get_id(cell)
+        var shapes = WGPhysic.get_active_shapes(physics[id])
+        _draw_collision_shapes(canvas, shapes)
 
-func _draw_surfaces(surface: WGSurface, polygons: Array):
+static func _draw_surfaces(canvas: RID, surface: WGSurface, polygons: Array):
     var size := surface.get_size()
     var colors := PackedColorArray([surface.color])
     for polygon in polygons:
@@ -59,11 +42,11 @@ func _draw_surfaces(surface: WGSurface, polygons: Array):
             var a: Vector2 = p / size * surface.scale
             uvs.append(a)
         if surface.texture:
-            RenderingServer.canvas_item_add_polygon(_canvas, polygon, colors, uvs, surface.texture)
+            RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs, surface.texture)
         else:
-            RenderingServer.canvas_item_add_polygon(_canvas, polygon, colors, uvs)
+            RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs)
 
-func _draw_collision_shapes(shapes:Array[PackedVector2Array]):
+static func _draw_collision_shapes(canvas: RID, shapes:Array[PackedVector2Array]):
     var colors = _get_debug_colors()
     var line_color = PackedColorArray([Color.BLACK])
     var uvs: PackedVector2Array
@@ -72,15 +55,15 @@ func _draw_collision_shapes(shapes:Array[PackedVector2Array]):
         var color: Color = colors[wrapi(i, 0 ,colors.size())]
         color.a = 0.6
         var c:=PackedColorArray([color])
-        RenderingServer.canvas_item_add_polygon(_canvas, polygon, c, uvs)
-        RenderingServer.canvas_item_add_polyline(_canvas, polygon, line_color)
+        RenderingServer.canvas_item_add_polygon(canvas, polygon, c, uvs)
+        RenderingServer.canvas_item_add_polyline(canvas, polygon, line_color)
         i+=1
 
-func emit_changed():
-    _rendered = false
-    emit_signal("changed")
+static func make_id(cell_coords: Vector2) -> int:
+    var canvas_coords := (cell_coords - cell_coords.posmod(2.0))/2.0
+    return WGUtils.make_cell_id(canvas_coords, WormGround.MAX_BLOCK_RANGE)
 
-func _get_debug_colors() -> PackedColorArray:
+static func _get_debug_colors() -> PackedColorArray:
     return PackedColorArray( [
         Color.RED,
         Color.ORANGE,

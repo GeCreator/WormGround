@@ -25,8 +25,8 @@ const CELL_SIZE: int = 200
 var _cells: Dictionary
 var _canvases: Dictionary
 var _physics: Dictionary
-var _canvas_render_list: Array[WGCanvas] = []
-var _physics_update_list: Array[WGPhysic] = []
+var _canvas_render_list: Dictionary = {}
+var _physics_update_list: Dictionary = {}
 var _geometry: WGGeometry
 var _geometry_physic: WGGeometry
 
@@ -34,7 +34,9 @@ func _ready():
     _geometry = WGGeometry.new( false )
     if level_data!=null:
         for d in level_data.get_data():
-            _get_cell(d[WGCell.DATA_COORDS]).set_data(d, _geometry)
+            var cell:=_get_cell(d[WGCell.DATA_COORDS])
+            WGCell.set_data(cell, d, _geometry)
+    _cells_changed(_cells.values())
 
 func _notification(what):
     if what == NOTIFICATION_EDITOR_PRE_SAVE:
@@ -43,18 +45,34 @@ func _notification(what):
 
 func add_surface(surface_id: int, shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
-    var cells: Array[WGCell] = _get_affected_cells(shape)
+    var cells: Array = _get_affected_cells(shape)
     for cell in cells:
-        cell.add_surface(surface_id, shape, _geometry)
+        WGCell.add_surface(cell, surface_id, shape, _geometry)
+    _cells_changed(cells)
 
 func remove_surface(shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
-    var cells: Array[WGCell] = _get_affected_cells(shape)
+    var cells: Array = _get_affected_cells(shape)
     for cell in cells:
-        cell.remove(shape, _geometry)
+        WGCell.remove(cell, shape, _geometry)
+    _cells_changed(cells)
 
-func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
-    var result: Array[WGCell]
+func _cells_changed(cells: Array):
+    level_data.mark_as_modified()
+    for cell in cells:
+        var canvas = _get_canvas(cell[WGCell.DATA_COORDS])
+        var id = WGCanvas.make_id(cell[WGCell.DATA_COORDS])
+        if not _canvas_render_list.has(id):
+            _canvas_render_list[id] = canvas
+        
+        id = WGCell.get_id(cell)
+        var physic = _physics[id]
+        WGPhysic.refresh(physic, cell, _geometry)
+        if not _physics_update_list.has(id):
+            _physics_update_list[id] = physic
+
+func _get_affected_cells(shape: PackedVector2Array) -> Array:
+    var result: Array
     var aabb := WGUtils.get_shape_area(shape)
     var from = WGUtils.get_cell_coords(aabb.position, CELL_SIZE)
     var to = WGUtils.get_cell_coords(aabb.end, CELL_SIZE)
@@ -65,34 +83,27 @@ func _get_affected_cells(shape: PackedVector2Array) -> Array[WGCell]:
             result.append(_get_cell(coords))
     return result
 
-func _get_cell(coords: Vector2) -> WGCell:
+func _get_cell(coords: Vector2) -> Array:
     var x = int(coords.x)
     var y = int(coords.y)
     
     var id = WGUtils.make_cell_id(coords, MAX_BLOCK_RANGE);
     if _cells.has(id): return _cells[id]
-    
-    var physic = WGPhysic.new( \
+    var cell = WGCell.create(coords)
+    _cells[id] = cell
+    # === PHYSIC
+    _physics[id] = WGPhysic.create( \
     get_world_2d().space, layer, mask,\
     priority, transform)
-    physic.changed.connect(_on_physics_changed.bind(physic))
-    var cell = WGCell.new(coords, CELL_SIZE, physic)
-    
-    var canvas: WGCanvas = _get_canvas(coords)
-    cell.changed.connect(canvas.on_cell_changed.bind(cell))
-    physic.changed.connect(canvas.on_physic_changed.bind(physic))
-    _cells[id] = cell
-    return  _cells[id]
+    # === CANVAS
+    var canvas = _get_canvas(coords)
+    canvas[WGCanvas.DATA_CELLS].append(cell)
+    return cell
 
-func _get_canvas(cell_coords: Vector2) -> WGCanvas:
-    # 1 WGCanvas for 4 WGCell
-    var canvas_coords := (cell_coords - cell_coords.posmod(2.0))/2.0
-    var canvas_id = WGUtils.make_cell_id(canvas_coords, MAX_BLOCK_RANGE)
+func _get_canvas(cell_coords: Vector2) -> Array:
+    var canvas_id = WGCanvas.make_id(cell_coords)
     if not _canvases.has(canvas_id):
-        var canvas := WGCanvas.new(get_canvas_item())
-        canvas.set_toolset(tool_set)
-        canvas.changed.connect(_on_canvas_changed.bind(canvas))
-        _canvases[canvas_id] = canvas
+        _canvases[canvas_id] = WGCanvas.create(get_canvas_item())
     return _canvases[canvas_id]
 
 func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
@@ -105,23 +116,23 @@ func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
     t = t.translated(transform.origin)
     return shape * t
 
-func _on_canvas_changed(canvas: WGCanvas):
-    level_data.mark_as_modified()
-    _canvas_render_list.append(canvas)
-
-func _on_physics_changed(physic: WGPhysic):
-    level_data.mark_as_modified()
-    _physics_update_list.append(physic)
-
 func _process(_delta: float):
+    # wait for physics update
+    if _physics_update_list.size()>0: return
+    # update canvas
     while _canvas_render_list.size()>0:
-        var canvas : WGCanvas = _canvas_render_list.pop_back()
-        canvas.render()
+        for key in _canvas_render_list:
+            var canvas: Array = _canvas_render_list[key]
+            WGCanvas.render(canvas, tool_set)
+            WGCanvas.render_debug(canvas, _physics)
+        _canvas_render_list.clear()
 
 func _physics_process(delta):
     while _physics_update_list.size()>0:
-        var physic : WGPhysic = _physics_update_list.pop_back()
-        physic.update()
+        for key in _physics_update_list:
+            var physic: Array = _physics_update_list[key]
+            WGPhysic.update(physic, transform)
+        _physics_update_list.clear()
 
 func _get_configuration_warnings() -> PackedStringArray:
     var result: PackedStringArray

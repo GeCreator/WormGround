@@ -15,9 +15,9 @@ func save_changes(cells: Dictionary):
     _is_modified = false
     var data: Array[Dictionary]
     for k in cells:
-        var cell: WGCell = cells[k]
-        if not cell.is_empty():
-            data.append(cell.get_data())
+        var cell: Array = cells[k]
+        if not WGCell.is_empty(cell):
+            data.append(WGCell.get_data(cell))
     var buffer = var_to_bytes(data)
     _data_size = buffer.size()
     _data = Marshalls.raw_to_base64(buffer.compress(FileAccess.COMPRESSION_GZIP))

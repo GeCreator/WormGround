@@ -1,77 +1,74 @@
 @tool
 class_name WGCell
-signal changed
 
 const DATA_COORDS: int = 0
 const DATA_SURFACE: int = 1
 const DATA_PHYSIC: int = 2
 
-var _size: int
-var _coords: Vector2
-var _surfaces: Dictionary
-var _physic: WGPhysic
+static func create(coords: Vector2) -> Array:
+    var result: Array
+    result.resize(3)
+    result[DATA_COORDS] = coords
+    result[DATA_SURFACE] = {}
+    result[DATA_PHYSIC] = WGUtils.castToArrayPackedVector2Array([])
+    return result
 
-func _init(coords: Vector2, size: int, physic: WGPhysic):
-    _coords = coords
-    _size = size
-    _physic = physic
-
-func _get_cutted_polygons(shape: PackedVector2Array) -> Array[PackedVector2Array]:
-    var x = _coords.x * _size
-    var y = _coords.y * _size
+static func _get_cutted_polygons(shape: PackedVector2Array, coords: Vector2) -> Array[PackedVector2Array]:
+    var x = coords.x * WormGround.CELL_SIZE
+    var y = coords.y * WormGround.CELL_SIZE
     
     var cut_polygon = PackedVector2Array([
         Vector2(x, y),
-        Vector2(x+_size, y),
-        Vector2(x+_size, y+_size),
-        Vector2(x, y+_size),
+        Vector2(x+WormGround.CELL_SIZE, y),
+        Vector2(x+WormGround.CELL_SIZE, y+WormGround.CELL_SIZE),
+        Vector2(x, y+WormGround.CELL_SIZE),
     ])
     return Geometry2D.intersect_polygons(shape, cut_polygon)
 
 ## cell is empty and can be skipped on save
-func is_empty() -> bool:
-    return _surfaces.size()==0 and _physic.is_empty()
+static func is_empty(cell: Array) -> bool:
+    return cell[DATA_SURFACE].size()==0 && cell[DATA_PHYSIC].size()==0
 
-func get_data() -> Dictionary:
+static func get_data(cell: Array) -> Dictionary:
     var result := {}
-    result[DATA_COORDS] = _coords
-    result[DATA_SURFACE] = _surfaces
-    result[DATA_PHYSIC] = _physic.get_shapes()
+    result[DATA_COORDS] = cell[DATA_COORDS]
+    result[DATA_SURFACE] = cell[DATA_SURFACE]
+    result[DATA_PHYSIC] = cell[DATA_PHYSIC]
     return result
 
-func set_data(data: Dictionary, geometry: WGGeometry):
+static func set_data(cell: Array, data: Dictionary, geometry: WGGeometry):
+    var surfaces := {}
     for v in data[DATA_SURFACE]:
         var n: Array[PackedVector2Array]
         for a in data[DATA_SURFACE][v]:
             n.append(a)
-        _surfaces[v] = n
-    _physic.set_shapes(data[DATA_PHYSIC], geometry)
-    
-    emit_signal("changed")
+        surfaces[v] = n
+    cell[DATA_SURFACE] = surfaces
+    cell[DATA_PHYSIC] = WGUtils.castToArrayPackedVector2Array(data[DATA_PHYSIC])
 
-func add_surface(surface_id:int, shape: PackedVector2Array, geometry: WGGeometry):
-    if not _surfaces.has(surface_id):
+static func add_surface(cell: Array, surface_id:int, shape: PackedVector2Array, geometry: WGGeometry):
+    var surfaces: Dictionary = cell[DATA_SURFACE]
+    if not surfaces.has(surface_id):
         var v:Array[PackedVector2Array] = []
-        _surfaces[surface_id] = v
+        surfaces[surface_id] = v
     
-    var new_parts = _get_cutted_polygons(shape)
-    for p in new_parts: _physic.add(p, geometry)
+    var new_parts = _get_cutted_polygons(shape, cell[DATA_COORDS])
+    for p in new_parts:
+        geometry.union(p, cell[DATA_PHYSIC])
     
-    for sid in _surfaces:
+    for sid in surfaces:
         if surface_id==sid:
             for p in new_parts:
-                geometry.union(p, _surfaces[sid])
+                geometry.union(p, surfaces[sid])
         else:
             for p in new_parts:
-                geometry.remove(p, _surfaces[sid])
-    emit_signal('changed')
+                geometry.remove(p, surfaces[sid])
 
-func get_surfaces() -> Dictionary:
-    return _surfaces
+static func remove(cell: Array, shape: PackedVector2Array, geometry: WGGeometry):
+    geometry.remove(shape, cell[DATA_PHYSIC])
+    var surfaces = cell[DATA_SURFACE]
+    for sid in surfaces:
+        geometry.remove(shape, surfaces[sid])
 
-func remove(shape: PackedVector2Array, geometry: WGGeometry):
-    _physic.remove(shape, geometry)
-    
-    for sid in _surfaces:
-        geometry.remove(shape, _surfaces[sid])
-    emit_signal('changed')
+static func get_id(cell: Array) -> int:
+    return WGUtils.make_cell_id(cell[DATA_COORDS], WormGround.MAX_BLOCK_RANGE)

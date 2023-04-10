@@ -27,3 +27,9 @@ static func make_cell_id(coords: Vector2, max_range: int) -> int:
     id += int(max_range + coords.x)
     id += pow(max_range, 2) * 2 + coords.y * max_range * 2
     return id
+
+static func castToArrayPackedVector2Array(data: Array) -> Array[PackedVector2Array]:
+    var result: Array[PackedVector2Array]
+    for a in data:
+        result.append(a)
+    return result
