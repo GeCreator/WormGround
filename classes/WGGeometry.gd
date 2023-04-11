@@ -75,6 +75,14 @@ func _normalize(shapes: Array[PackedVector2Array]):
         result.append_array(_normalize_shape(shape, 3))
     shapes.clear()
     shapes.append_array(result)
+    if _debug:
+        for s in shapes:
+            if _has_triangulate_error(s):
+                _dump_error('triangulate')
+                return
+            if _has_decompose_error(s):
+                _dump_error('decompose')
+                return
 
 func _repair_shape(shape: PackedVector2Array) -> bool:
     if shape.size()<3: return false
