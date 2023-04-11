@@ -84,52 +84,6 @@ func _normalize(shapes: Array[PackedVector2Array]):
                 _dump_error('decompose')
                 return
 
-func _repair_shape(shape: PackedVector2Array) -> bool:
-    if shape.size()<3: return false
-    var result: bool = false
-    var size:=shape.size()
-    var try: int = 3
-    while(try>0):
-        var has_errors: bool = false
-        for n in size:
-            var point:= shape[n]
-            for j in range(n+2, n+size-2):
-                var s = _get_segment(j, shape)
-                var cp = Geometry2D.get_closest_point_to_segment(point,s[0],s[1])
-                if point.distance_to(cp)<0.1:
-                    point = point.lerp(shape[n-1], 0.1)
-                    point = point.lerp(shape[wrapi(n+1,0,size)], 0.1)
-                    shape[n] = point
-                    has_errors = true
-                    result = true
-        try-=1
-        if not has_errors: break
-    return result
-
-func _normalize_shape_experimental(shape:PackedVector2Array):
-    #print('_normalize_shape')
-    var result: Array[PackedVector2Array]
-    var try: int = 3
-    
-    while(try>0):
-        var size := shape.size()
-        var remove_list: PackedInt32Array
-        remove_list.clear()
-        for n in size:
-            var previous := shape[n-1]
-            var current := shape[n]
-            var next := shape[wrapi(n+1,0,size)]
-            if _is_bad_angle(previous, current, next):
-                remove_list.append(n)
-                continue
-        if remove_list.size()>0:
-            _remove_by_list(shape, remove_list)
-            continue
-        break
-    try -=1
-    if _repair_shape(shape):
-        _normalize_shape_experimental(shape)
-
 func _normalize_shape(shape: PackedVector2Array, iter: int) -> Array[PackedVector2Array]:
     var result: Array[PackedVector2Array]
     _snap_to_grid(shape)
