@@ -1,7 +1,6 @@
 class_name WGGeometry
 
 signal error(info)
-
 const CUT_LINE_SIZE = 10000.0
 const BAN_ANGLE:= 0.0349 # TAU/180 = 2°
     
@@ -324,6 +323,7 @@ func _remove_hole(normal: PackedVector2Array, hole: PackedVector2Array) -> Array
     var hrp: Vector2 = hole[p[1]] # hole rightmost point
     var line_a:= _get_collision_line(hlp, normal, -CUT_LINE_SIZE)
     var line_b:= _get_collision_line(hrp, normal, CUT_LINE_SIZE)
+    
     var sl: int = -1; var pl:=Vector2.INF # segment left; point left
     var sr: int = 0; var pr:=Vector2.INF # segment right; point right
     
@@ -380,15 +380,15 @@ func _get_collision_line(point: Vector2, shape:PackedVector2Array, max_size: flo
 func _get_left_right_vertexes(shape: PackedVector2Array) -> PackedInt32Array:
     var result := PackedInt32Array([0,0])
     var i: int = 0
-    var left: float = INF
-    var right: float = -INF
+    var up: float = INF
+    var down: float = -INF
+    
     for p in shape:
-        var s = _get_segment(i-1, shape)
-        if p.x<left and s[0].y<s[1].y:
-            left = p.x
+        if p.y<up:
+            up=p.y
             result[0] = i
-        if p.x>right and s[0].y>s[1].y:
-            right = p.x
+        if p.y>down:
+            down = p.y
             result[1] = i
         i+=1
     return result
