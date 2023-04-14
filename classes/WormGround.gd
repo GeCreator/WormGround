@@ -17,7 +17,9 @@ const DRAW_PER_FRAME: int = 10
     set(value):
         level_data = value
         notify_property_list_changed() # required by plugin
-
+## shape/hole size that will be skipped.
+## Size is sum of polygon segments length
+@export var minimal_shape: float = 20.0
 @export_subgroup("collision")
 @export_flags_2d_physics var layer: int = 1
 @export_flags_2d_physics var mask: int = 1
@@ -32,7 +34,7 @@ var _geometry: WGGeometry
 var _geometry_physic: WGGeometry
 
 func _ready():
-    _geometry = WGGeometry.new( false )
+    _geometry = WGGeometry.new( minimal_shape )
     if level_data!=null:
         for d in level_data.get_data():
             var cell:=_get_cell(d[WGCell.DATA_COORDS])

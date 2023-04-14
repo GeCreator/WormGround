@@ -4,7 +4,6 @@ signal error(info)
 const CUT_LINE_SIZE = 10000.0
 const BAN_ANGLE:= 0.0349 # TAU/180 = 2°
     
-const MIN_PART_SIZE := 15.0 # min sum length of polygon segments
 const SMOOTH_SIZE := 4.0 
 const SNAP_GRID_SIZE := Vector2(1.0, 1.0)
 
@@ -15,9 +14,13 @@ const RES_MULTIPLE_NORMAL: int = 3 # multiple normal shapes
 
 var _debug: bool = false
 var _debug_info: Dictionary
+var _minimal_shape_size: float # min sum length of polygon segments
 
-func _init(debug: bool = false)  -> void:
+func set_debug(debug:bool) -> void:
     _debug = debug
+
+func _init(minimal_shape_size: float = 30.0)  -> void:
+    _minimal_shape_size = minimal_shape_size
 
 func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]):
     if _debug: _add_debug_info(add, shapes, 'union')
@@ -71,6 +74,7 @@ func remove(remove:PackedVector2Array, shapes:Array[PackedVector2Array]):
 func _normalize(shapes: Array[PackedVector2Array]):
     var result: Array[PackedVector2Array]
     for shape in shapes:
+        if _it_small_shape(shape): continue
         result.append_array(_normalize_shape(shape, 3))
     shapes.clear()
     shapes.append_array(result)
@@ -174,9 +178,9 @@ func _it_small_shape(shape: PackedVector2Array) -> bool:
     for n in shape.size():
         var segment:= _get_segment(n, shape)
         total_length += _get_segment_length(segment)
-        if total_length>MIN_PART_SIZE:
+        if total_length>_minimal_shape_size:
             return false
-    return total_length<MIN_PART_SIZE
+    return total_length<_minimal_shape_size
 
 func _is_bad_angle(a: Vector2, b: Vector2, c: Vector2) -> bool:
     var r1: = (a-b).angle()
@@ -318,6 +322,7 @@ func _resolve_hole_errors(shapes: Array[PackedVector2Array]) -> Array[PackedVect
     return result
 
 func _remove_hole(normal: PackedVector2Array, hole: PackedVector2Array) -> Array[PackedVector2Array]:
+    if _it_small_shape(hole): return [normal.duplicate()]
     var p:=_get_left_right_vertexes(hole)
     var hlp: Vector2 = hole[p[0]] # hole leftmost point
     var hrp: Vector2 = hole[p[1]] # hole rightmost point
