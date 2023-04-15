@@ -4,7 +4,6 @@ signal error(info)
 const CUT_LINE_SIZE = 10000.0
 const BAN_ANGLE:= 0.0349 # TAU/180 = 2°
     
-const SMOOTH_SIZE := 4.0 
 const SNAP_GRID_SIZE := Vector2(1.0, 1.0)
 
 const RES_NORMAL: int = 0 # normal shape
@@ -90,9 +89,8 @@ func _normalize(shapes: Array[PackedVector2Array]):
 func _normalize_shape(shape: PackedVector2Array, iter: int) -> Array[PackedVector2Array]:
     var result: Array[PackedVector2Array]
     _snap_to_grid(shape)
-    _remove_short_steps(shape)
-    _remove_bad_angles(shape)
     _remove_short_segments(shape)
+    _remove_bad_angles(shape)
     _unchunk_shape(shape)
     
     var shapes = Geometry2D.intersect_polygons(shape, shape)
@@ -148,25 +146,8 @@ func _remove_short_segments(shape:PackedVector2Array):
             else:
                 remove_list.append(wrapi(n+1,0,size))
     _remove_by_list(shape, remove_list)
-    
-func _remove_short_steps(shape:PackedVector2Array):
-    var remove_list: PackedInt32Array
-    var size := shape.size()
-    var skip: bool = false
-    for n in size:
-        if skip:
-            skip = false
-            continue
-        var prev:= shape[n-1]
-        var curr := shape[wrapi(n+1,0,size)]
-        if prev.distance_to(curr)<SMOOTH_SIZE:
-            skip = true
-            remove_list.append(n)
-        else:
-            prev = curr
-    _remove_by_list(shape, remove_list)
     if remove_list.size()>0:
-        _remove_short_steps(shape)
+        _remove_short_segments(shape)
 
 func _snap_to_grid(shape: PackedVector2Array):
     
