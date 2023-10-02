@@ -55,7 +55,6 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]):
                 add.append_array(m.pop_front())
                 clipped.append_array(m)
     clipped.append(add)
-    _clean_from_trash(holes)
     
     if holes.size()>0:
         for hole in holes:
@@ -184,18 +183,6 @@ func _remove_by_list(data, remove_list: PackedInt32Array):
     remove_list.reverse()
     for n in remove_list:
         data.remove_at(n)
-
-func _clean_from_trash(shapes:Array[PackedVector2Array]):
-    var remove_list: PackedInt32Array
-    var i: int = -1
-    for shape in shapes:
-        i+=1
-        # shape is just segment!
-        if shape.size()<3:
-            remove_list.append(i)
-            continue
-        
-    _remove_by_list(shapes, remove_list)
 
 ## return PackedVector2Array with 2 points of segment n
 func _get_segment(n: int, polygon: PackedVector2Array) -> PackedVector2Array:
