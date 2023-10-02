@@ -76,31 +76,18 @@ func _normalize(shapes: Array[PackedVector2Array]):
         result.append_array(_normalize_shape(shape, 3))
     shapes.clear()
     shapes.append_array(result)
-    if _debug:
-        for s in shapes:
-            if _has_triangulate_error(s):
-                _dump_error('triangulate')
-                return
-            if _has_decompose_error(s):
-                _dump_error('decompose')
-                return
 
 func _normalize_shape(shape: PackedVector2Array, iter: int) -> Array[PackedVector2Array]:
     var result: Array[PackedVector2Array]
-    _snap_to_grid(shape)
+    # _snap_to_grid(shape)
     _remove_short_segments(shape)
-    _remove_bad_angles(shape)
-    _unchunk_shape(shape)
+    # _remove_bad_angles(shape)
+    # _unchunk_shape(shape)
+    return _fix_shape(shape)
+
     
-    var shapes = Geometry2D.intersect_polygons(shape, shape)
-    for s in shapes:
-        if _has_triangulate_error(s):
-            if iter>0:
-                result.append_array(_normalize_shape(s, iter-1))
-            else:
-                pass # skip shape (remove)
-        else:
-            result.append(s)
+
+    
     return result
 
 func decompose(shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
@@ -131,25 +118,23 @@ func _unchunk_shape(shape: PackedVector2Array):
                 c -= b
                 shape[n] = b+(a.normalized()+c.normalized()).normalized()
 
+            # if _segment_is_horizontal(segment):
 func _remove_short_segments(shape:PackedVector2Array):
     var remove_list: PackedInt32Array
     var size := shape.size()
     if size<2: return
-    for n in size:
-        var pointa: = shape[n]
-        var pointb: = shape[wrapi(n+1,0,size)]
-        if pointa.distance_to(pointb)<1.0:
-            var segment = _get_segment(n+1, shape)
-            if _segment_is_horizontal(segment):
-                remove_list.append(n)
-            else:
-                remove_list.append(wrapi(n+1,0,size))
+    var previous_length = _get_segment_length(_get_segment(-1, shape))
+    for i in size:
+        var current_length = _get_segment_length(_get_segment(i, shape))
+        if (previous_length+current_length)<10.0:
+            remove_list.append(i)
+            previous_length = previous_length+current_length
+        else:
+            previous_length = current_length
+
     _remove_by_list(shape, remove_list)
-    if remove_list.size()>0:
-        _remove_short_segments(shape)
 
 func _snap_to_grid(shape: PackedVector2Array):
-    
     for i in shape.size():
         shape[i] = shape[i].snapped(SNAP_GRID_SIZE)
 
@@ -386,6 +371,7 @@ func _has_triangulate_error(shape: PackedVector2Array) -> bool:
 
 func _has_decompose_error(shape: PackedVector2Array) -> bool:
     return Geometry2D.decompose_polygon_in_convex(shape).size()==0
+
 # analyse result of Geometry2D operations
 # return RES_... information
 func _res_analysis(res: Array) -> int:
