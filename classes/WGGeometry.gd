@@ -122,9 +122,9 @@ func _remove_short_segments(shape:PackedVector2Array):
     var remove_list: PackedInt32Array
     var size := shape.size()
     if size<2: return
-    var previous_length = _get_segment_length(_get_segment(-1, shape))
+    var previous_length = _get_segment_length(_get_segment(-1, shape, size))
     for i in size:
-        var current_length = _get_segment_length(_get_segment(i, shape))
+        var current_length = _get_segment_length(_get_segment(i, shape, size))
         if (previous_length+current_length)<10.0:
             remove_list.append(i)
             previous_length = previous_length+current_length
@@ -139,8 +139,9 @@ func _snap_to_grid(shape: PackedVector2Array):
 
 func _it_small_shape(shape: PackedVector2Array) -> bool:
     var total_length: float = 0
-    for n in shape.size():
-        var segment:= _get_segment(n, shape)
+    var size = shape.size()
+    for n in size:
+        var segment:= _get_segment(n, shape, size)
         total_length += _get_segment_length(segment)
         if total_length>_minimal_shape_size:
             return false
@@ -169,12 +170,12 @@ func _remove_bad_angles(shape: PackedVector2Array):
         if absf(PI-diff)<BAN_ANGLE: # remove obtuse angle >178°
             remove_list.append(i)
         elif diff<BAN_ANGLE: # remove sharp angle <2°
-            var s1:= _get_segment(i-1, shape)
-            var s2:= _get_segment(i, shape)
+            var s1:= _get_segment(i-1, shape, size)
+            var s2:= _get_segment(i, shape, size)
             if _get_segment_length(s1)>_get_segment_length(s2):
-                shape[wrapi(i+1,0,size)] = _get_segment_intersection(s1, _get_segment(i+1, shape))
+                shape[wrapi(i+1,0,size)] = _get_segment_intersection(s1, _get_segment(i+1, shape, size))
             else:
-                shape[wrapi(i-1,0,size)] = _get_segment_intersection(_get_segment(i-2, shape), s2)
+                shape[wrapi(i-1,0,size)] = _get_segment_intersection(_get_segment(i-2, shape, size), s2)
             remove_list.append(i)
     _remove_by_list(shape, remove_list)
 
@@ -185,8 +186,7 @@ func _remove_by_list(data, remove_list: PackedInt32Array):
         data.remove_at(n)
 
 ## return PackedVector2Array with 2 points of segment n
-func _get_segment(n: int, polygon: PackedVector2Array) -> PackedVector2Array:
-    var size = polygon.size()
+func _get_segment(n: int, polygon: PackedVector2Array, size: int) -> PackedVector2Array:
     return PackedVector2Array([
         polygon[wrapi(n,0, size)],
         polygon[wrapi(n+1,0, size)]
@@ -286,7 +286,7 @@ func _remove_hole(normal: PackedVector2Array, hole: PackedVector2Array) -> Array
     
     var nsize: int = normal.size()
     for n in nsize:
-        var sgm = _get_segment(n, normal)
+        var sgm = _get_segment(n, normal, nsize)
         if sgm[0].y>sgm[1].y: 
             var x = Geometry2D.segment_intersects_segment(line_a[0],line_a[1],sgm[0],sgm[1])
             if x!=null and hlp.distance_squared_to(x)<hlp.distance_squared_to(pl):
@@ -385,14 +385,14 @@ func _fix_shape(shape: PackedVector2Array, level: int = 0) -> Array[PackedVector
     var N = shape.size()
     var K = N-1
     for i in N-2:
-        var segment_a = _get_segment(i, shape)
+        var segment_a = _get_segment(i, shape, N)
         for j in range(i+2, K):
-            var segment_b = _get_segment(j, shape)
+            var segment_b = _get_segment(j, shape, N)
             var intersected = Geometry2D.segment_intersects_segment(segment_a[0], segment_a[1], segment_b[0], segment_b[1])
             if intersected:
                 var shape_a = PackedVector2Array([intersected])
                 var shape_b = PackedVector2Array([intersected])
-                var t = _get_segment(i+1, shape)
+                var t = _get_segment(i+1, shape, N)
                 if Geometry2D.segment_intersects_segment(t[0],t[1], segment_b[0], segment_b[1]):
                     shape_a.append_array(_extract_sequence(j+1,i,shape))
                     shape_b.append_array(_extract_sequence(i+2,j,shape))
