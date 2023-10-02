@@ -405,6 +405,34 @@ func _res_analysis(res: Array) -> int:
     
     return RES_ANOMALY
 
+func _fix_shape(shape: PackedVector2Array, level: int = 0) -> Array[PackedVector2Array]:
+    var result : Array[PackedVector2Array]
+    if not _has_triangulate_error(shape) or level>10:
+        return [shape]
+
+    var N = shape.size()
+    var K = N-1
+    for i in N-2:
+        var segment_a = _get_segment(i, shape)
+        for j in range(i+2, K):
+            var segment_b = _get_segment(j, shape)
+            var intersected = Geometry2D.segment_intersects_segment(segment_a[0], segment_a[1], segment_b[0], segment_b[1])
+            if intersected:
+                var shape_a = PackedVector2Array([intersected])
+                var shape_b = PackedVector2Array([intersected])
+                var t = _get_segment(i+1, shape)
+                if Geometry2D.segment_intersects_segment(t[0],t[1], segment_b[0], segment_b[1]):
+                    shape_a.append_array(_extract_sequence(j+1,i,shape))
+                    shape_b.append_array(_extract_sequence(i+2,j,shape))
+                else:
+                    shape_a.append_array(_extract_sequence(j+2,i,shape))
+                    shape_b.append_array(_extract_sequence(i+1,j,shape))
+                result.append_array(_fix_shape(shape_a, level+1))
+                result.append_array(_fix_shape(shape_b, level+1))
+                return result
+        K=N
+    return result
+
 # + - - - - - - - +
 # |  DEV METHODS  |
 # + - - - - - - - +
