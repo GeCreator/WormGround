@@ -24,7 +24,6 @@ func _init(minimal_shape_size: float = 30.0)  -> void:
 func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]):
     if _debug: _add_debug_info(add, shapes, 'union')
     add = add.duplicate()
-    _snap_to_grid(add)
     var holes: Array[PackedVector2Array]
     var intersected: Array[PackedVector2Array]
     var remove_list: PackedInt32Array
