@@ -80,13 +80,10 @@ func _normalize_shape(shape: PackedVector2Array, iter: int) -> Array[PackedVecto
     var result: Array[PackedVector2Array]
     # _snap_to_grid(shape)
     _remove_short_segments(shape)
+    # return empty result. shapes is broken
+    if shape.size()<3: return result
     # _remove_bad_angles(shape)
-    # _unchunk_shape(shape)
-    return _fix_shape(shape)
-
-    
-
-    
+    result = _fix_shape(shape)
     return result
 
 func decompose(shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
@@ -95,29 +92,6 @@ func decompose(shapes: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
         result.append_array(Geometry2D.decompose_polygon_in_convex(shape))
     return result
 
-func _unchunk_shape(shape: PackedVector2Array):
-    var size:= shape.size()
-    var points: Dictionary
-    for n in size:
-        var point = shape[n]
-        if _point_touch_border(point): continue
-        var coords := int(point.x) + int(point.y)*1000
-        
-        if not points.has(coords):
-            points[coords] = PackedInt32Array()
-        points[coords].append(n)
-    for k in points:
-        var list: PackedInt32Array = points[k]
-        if list.size()>1:
-            for n in list:
-                var a:= shape[n-1]
-                var b:= shape[n]
-                var c:= shape[wrapi(n+1,0,size)]
-                a -= b
-                c -= b
-                shape[n] = b+(a.normalized()+c.normalized()).normalized()
-
-            # if _segment_is_horizontal(segment):
 func _remove_short_segments(shape:PackedVector2Array):
     var remove_list: PackedInt32Array
     var size := shape.size()
@@ -191,11 +165,6 @@ func _get_segment(n: int, polygon: PackedVector2Array, size: int) -> PackedVecto
         polygon[wrapi(n,0, size)],
         polygon[wrapi(n+1,0, size)]
     ])
-
-func _segment_is_horizontal(segment: PackedVector2Array) -> bool:
-    var a: Vector2 = segment[0]
-    var b: Vector2 = segment[1]
-    return absf(a.y-b.y)<0.001
 
 func _point_touch_border(point: Vector2) -> bool:
     point = point.posmod(200.0)
