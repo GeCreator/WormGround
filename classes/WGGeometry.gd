@@ -320,7 +320,10 @@ func _get_left_right_vertexes(shape: PackedVector2Array) -> PackedInt32Array:
     return result
 
 func _shape_is_intersects(a: PackedVector2Array, b: PackedVector2Array):
-    return Geometry2D.intersect_polygons(a,b).size()>0
+    var a_rect:Rect2 = WGUtils.get_shape_area(a)
+    var b_rect:Rect2 = WGUtils.get_shape_area(b)
+    return a_rect.intersects(b_rect)
+    
 
 func _has_triangulate_error(shape: PackedVector2Array) -> bool:
     return Geometry2D.triangulate_polygon(shape).size()==0
