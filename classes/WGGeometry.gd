@@ -11,18 +11,14 @@ const RES_BROKEN: int = 1 # shape with holes inside
 const RES_ANOMALY: int = 2 # shape have multiple normal shapes with holes
 const RES_MULTIPLE_NORMAL: int = 3 # multiple normal shapes
 
-var _debug: bool = false
-var _debug_info: Dictionary
-var _minimal_shape_size: float # min sum length of polygon segments
 
-func set_debug(debug:bool) -> void:
-    _debug = debug
+var _minimal_shape_size: float # min sum length of polygon segments
 
 func _init(minimal_shape_size: float = 30.0)  -> void:
     _minimal_shape_size = minimal_shape_size
 
 func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]):
-    if _debug: _add_debug_info(add, shapes, 'union')
+    
     add = add.duplicate()
     var holes: Array[PackedVector2Array]
     var intersected: Array[PackedVector2Array]
@@ -64,7 +60,6 @@ func union(add: PackedVector2Array, shapes: Array[PackedVector2Array]):
     shapes.append_array(clipped)
 
 func remove(remove:PackedVector2Array, shapes:Array[PackedVector2Array]):
-    if _debug: _add_debug_info(remove, shapes, 'remove')
     remove = remove.duplicate()
     _clip_from_polygons(remove, shapes)
 
@@ -376,46 +371,3 @@ func _fix_shape(shape: PackedVector2Array, level: int = 0) -> Array[PackedVector
         K=N
     return result
 
-# + - - - - - - - +
-# |  DEV METHODS  |
-# + - - - - - - - +
-func _add_debug_info(shape: PackedVector2Array, shapes: Array[PackedVector2Array], operation: String):
-    _debug_info = {
-        shape = shape.duplicate(),
-        shapes = shapes.duplicate(true),
-        operation = operation
-    }
-
-func _dump_shapes(shapes:Array[PackedVector2Array], text: String):
-    for s in shapes:
-        for p in s:
-            if p.abs().length()>CUT_LINE_SIZE:
-                print("Infinity point %s" % text)
-                print('dump: ', str(s).replace("(","Vector2("))
-                s.clear()
-                continue
-        
-        if s.size()<3:
-            print("Short shape %s" % text)
-        elif Geometry2D.triangulate_polygon(s).size()==0:
-            print("Triangulate Error %s" % text)
-            print('dump: ', str(s).replace("(","Vector2("))
-
-func _info(shapes:Array[PackedVector2Array]):
-    match(_res_analysis(shapes)):
-        RES_NORMAL: print('RES_NORMAL')
-        RES_BROKEN: print('RES_BROKEN')
-        RES_ANOMALY: print('RES_ANOMALY')
-        RES_MULTIPLE_NORMAL: print('RES_MULTIPLE_NORMAL')
-
-func _dump_error(type: String):
-    print('Found Error: ', type)
-    _debug_info['type'] = type
-    emit_signal("error", _debug_info)
-
-func _debug_rotate_shape(shape: PackedVector2Array, offset: int):
-    var result: PackedVector2Array
-    result.append_array( shape.slice(offset) )
-    result.append_array( shape.slice(0, offset) )
-    shape.clear()
-    shape.append_array(result)
