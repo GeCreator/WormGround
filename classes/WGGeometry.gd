@@ -71,12 +71,12 @@ func remove(remove:PackedVector2Array, shapes:Array[PackedVector2Array]):
 func _normalize(shapes: Array[PackedVector2Array]):
     var result: Array[PackedVector2Array]
     for shape in shapes:
-        if _it_small_shape(shape): continue
         result.append_array(_normalize_shape(shape, 3))
     shapes.clear()
     shapes.append_array(result)
 
 func _normalize_shape(shape: PackedVector2Array, iter: int) -> Array[PackedVector2Array]:
+    if _it_small_shape(shape): return []
     var result: Array[PackedVector2Array]
     # _snap_to_grid(shape)
     _remove_short_segments(shape)
