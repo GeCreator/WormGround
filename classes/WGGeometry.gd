@@ -99,7 +99,7 @@ func _remove_short_segments(shape:PackedVector2Array):
     var previous_length = _get_segment_length(_get_segment(-1, shape, size))
     for i in size:
         var current_length = _get_segment_length(_get_segment(i, shape, size))
-        if (previous_length+current_length)<10.0:
+        if not _point_touch_border(shape[i]) and (previous_length+current_length)<_minimal_shape_size:
             remove_list.append(i)
             previous_length = previous_length+current_length
         else:
@@ -167,8 +167,7 @@ func _get_segment(n: int, polygon: PackedVector2Array, size: int) -> PackedVecto
     ])
 
 func _point_touch_border(point: Vector2) -> bool:
-    point = point.posmod(200.0)
-    return point.x<1.0 || point.y<1.0 || point.x>199.0 || point.y > 199.0
+    return (int(shape[i].x)%200==0) or (int(shape[i].y)%200==0)
 
 func _get_segment_length(segment: PackedVector2Array) -> float:
     return segment[0].distance_to(segment[1])
