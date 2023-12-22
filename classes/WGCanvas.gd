@@ -31,10 +31,9 @@ static func render_debug(canvas_data: Array, physics: Dictionary):
         # _draw_collision_shapes(canvas, shapes)
 
 static func _draw_surfaces(canvas: RID, texture: Texture2D, scale: Vector2, polygons: Array):
-    var size := Vector2(
-        texture.get_image().get_width(),
-        texture.get_image().get_height()
-    )
+    var size := Vector2.ONE
+    if (texture):
+        size = Vector2(texture.get_image().get_width(),texture.get_image().get_height())
     var colors := PackedColorArray([Color.WHITE])
     for polygon in polygons:
         var uvs: PackedVector2Array
