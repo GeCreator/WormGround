@@ -6,13 +6,10 @@ const CELL_SIZE: int = 200
 const DRAW_PER_FRAME: int = 10
 
 @export_category("WormGround")
-
-@export var tool_set: WGToolSet:
+@export var texture: Texture2D:
     set(value):
-        tool_set = value
-        for k in _canvases:
-            (_canvases[k] as WGCanvas).set_toolset(tool_set)
-        notify_property_list_changed() # required by plugin
+        texture = value
+
 @export var level_data: WGLevelData:
     set(value):
         level_data = value
@@ -31,14 +28,14 @@ var _physics: Dictionary
 var _canvas_render_list: Dictionary = {}
 var _physics_update_list: Dictionary = {}
 var _geometry: WGGeometry
-var _geometry_physic: WGGeometry
+
 
 func _ready():
     _geometry = WGGeometry.new( minimal_shape )
     if level_data!=null:
         for d in level_data.get_data():
             var cell:=_get_cell(d[WGCell.DATA_COORDS])
-            WGCell.set_data(cell, d, _geometry)
+            WGCell.set_data(cell, d)
     _cells_changed(_cells.values())
 
 func _notification(what):
@@ -50,7 +47,7 @@ func add_surface(surface_id: int, shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
     var cells: Array = _get_affected_cells(shape)
     for cell in cells:
-        WGCell.add_surface(cell, surface_id, shape, _geometry)
+        WGCell.add_surface(cell, shape, _geometry)
     _cells_changed(cells)
 
 func remove_surface(shape: PackedVector2Array):
@@ -60,8 +57,8 @@ func remove_surface(shape: PackedVector2Array):
         WGCell.remove(cell, shape, _geometry)
     _cells_changed(cells)
 
-func redraw():
-    _canvas_render_list = _canvases.duplicate()
+#func redraw():
+    #_canvas_render_list = _canvases.duplicate()
 
 func _cells_changed(cells: Array):
     level_data.mark_as_modified()
@@ -133,7 +130,7 @@ func _process(_delta: float):
     for key in _canvas_render_list:
         remove_list.append(key)
         var canvas: Array = _canvas_render_list[key]
-        WGCanvas.render(canvas, tool_set)
+        WGCanvas.render(canvas, texture)
         WGCanvas.render_debug(canvas, _physics)
         limit -=1
         if limit<=0: break
@@ -148,6 +145,5 @@ func _physics_process(delta):
 
 func _get_configuration_warnings() -> PackedStringArray:
     var result: PackedStringArray
-    if tool_set==null: return ['ToolSet required to draw stuffs']
     if level_data==null: return ['LevelData required to save stuffs']
-    return []
+    return result

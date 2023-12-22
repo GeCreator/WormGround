@@ -13,11 +13,11 @@ func mark_as_modified():
 func save_changes(cells: Dictionary):
     if not _is_modified: return
     _is_modified = false
-    var data: Array[Dictionary]
+    var data: Array
     for k in cells:
         var cell: Array = cells[k]
         if not WGCell.is_empty(cell):
-            data.append(WGCell.get_data(cell))
+            data.append(cell)
     var buffer = var_to_bytes(data)
     _data_size = buffer.size()
     _data = Marshalls.raw_to_base64(buffer.compress(FileAccess.COMPRESSION_GZIP))

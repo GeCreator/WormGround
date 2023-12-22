@@ -17,7 +17,7 @@ static func create(space:RID, layer:int, mask:int, priority:float, transform: Tr
     return result
 
 static func refresh(physic_data:Array, cell_data: Array, geometry: WGGeometry):
-     physic_data[DATA_NEW_SHAPES] = geometry.decompose(cell_data[WGCell.DATA_PHYSIC])
+     physic_data[DATA_NEW_SHAPES] = geometry.decompose(cell_data[WGCell.DATA_SURFACE])
 
 static func update(physic_data: Array, transform: Transform2D):
     var body = physic_data[DATA_BODY]

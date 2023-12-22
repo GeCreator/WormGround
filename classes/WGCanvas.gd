@@ -14,15 +14,13 @@ static func create(base: RID) -> Array:
     result[DATA_CELLS] = []
     return result
 
-static func render(canvas_data: Array, toolset: WGToolSet):
+static func render(canvas_data: Array, texture: Texture2D):
     var canvas :RID = canvas_data[DATA_CANVAS]
     var cells :Array = canvas_data[DATA_CELLS]
     RenderingServer.canvas_item_clear(canvas)
     for c in cells:
-        var surfaces = c[WGCell.DATA_SURFACE]
-        for surface_id in surfaces:
-            var surface = toolset.get_surface(surface_id)
-            _draw_surfaces(canvas, surface, surfaces[surface_id])
+        _draw_surfaces(canvas, texture, c[WGCell.DATA_SURFACE])
+        
 
 static func render_debug(canvas_data: Array, physics: Dictionary):
     var cells :Array = canvas_data[DATA_CELLS]
@@ -30,18 +28,21 @@ static func render_debug(canvas_data: Array, physics: Dictionary):
     for cell in cells:
         var id = WGCell.get_id(cell)
         var shapes = WGPhysic.get_active_shapes(physics[id])
-        _draw_collision_shapes(canvas, shapes)
+        # _draw_collision_shapes(canvas, shapes)
 
-static func _draw_surfaces(canvas: RID, surface: WGSurface, polygons: Array):
-    var size := surface.get_size()
-    var colors := PackedColorArray([surface.color])
+static func _draw_surfaces(canvas: RID, surface: Texture2D, polygons: Array):
+    var size := Vector2(
+        surface.get_image().get_width(),
+        surface.get_image().get_height()
+    )
+    var colors := PackedColorArray([Color.WHITE]) #surface.color
     for polygon in polygons:
         var uvs: PackedVector2Array
         for p in polygon:
-            var a: Vector2 = p / size * surface.scale
+            var a: Vector2 = p / size * Vector2.ONE #surface.scale
             uvs.append(a)
-        if surface.texture:
-            RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs, surface.texture)
+        if surface:
+            RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs, surface)
         else:
             RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs)
 

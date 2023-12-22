@@ -118,9 +118,6 @@ func _on_ui_action(action: String, value):
 
 func _on_property_list_changed():
     _node.update_configuration_warnings()
-    _tool_set = _node.tool_set
-    if not _tool_set.is_connected("changed", _node.redraw):
-        _tool_set.connect("changed", _node.redraw)
 
 func _exit_tree():
     _diactivate_ui()
