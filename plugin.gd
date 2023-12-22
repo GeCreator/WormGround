@@ -3,13 +3,11 @@ extends EditorPlugin
 
 var _is_handle: bool = false
 var _is_in_edit_mode: bool = false
-var _bottom_panel_is_created: bool = false
-var _bottom_panel_visibility: bool = false
+var _tools_visible: bool = false
 var _in_canvas: bool = false
 
 var _brush: WGBrush
 var _node: WormGround
-var _bottom_panel: Control
 var _tool_buttons: HBoxContainer
 var _current_surface: int
 var _tool_set: WGToolSet
@@ -26,7 +24,6 @@ func _enter_tree():
     add_custom_type("WormGround", "Node2D", preload("classes/WormGround.gd"), icon)
     
     _tool_buttons = _make_ui_element(preload("./scenes/editor_menu/editor_menu.tscn"))
-    _bottom_panel = _make_ui_element(preload("./scenes/bottom_panel/bottom_panel.tscn"))
 
 func _on_selection_changed():
     var selected: Array = get_editor_interface().get_selection().get_selected_nodes()
@@ -103,50 +100,30 @@ func _handles(object) -> bool:
     return _is_handle
 
 func _activate_ui():
-    if _bottom_panel_is_created: return
-    _bottom_panel_is_created = true
-    add_control_to_bottom_panel(_bottom_panel, 'WormGround')
+    if _tools_visible: return
+    _tools_visible = true
     add_control_to_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _tool_buttons)
-    if _bottom_panel_visibility:
-        make_bottom_panel_item_visible(_bottom_panel)
 
 func _diactivate_ui():
-    if not _bottom_panel_is_created: return
-    _bottom_panel_is_created = false
-    remove_control_from_bottom_panel(_bottom_panel)
+    if not _tools_visible: return
+    _tools_visible = false
     remove_control_from_container(EditorPlugin.CONTAINER_CANVAS_EDITOR_MENU, _tool_buttons)
 
 func _on_ui_action(action: String, value):
-    
     match(action):
         "tool_brush":
-            _is_in_edit_mode = _current_surface>0
-        "panel_visibility_changed":
-            if _node!=null:
-                _bottom_panel_visibility = value
-        'surface_create':
             _is_in_edit_mode = true
-            var surface := WGSurface.new()
-            _current_surface = _tool_set.add_surface(surface)
-            get_editor_interface() \
-                .edit_resource(surface)
-        'surface_select':
-            _is_in_edit_mode = true
-            _current_surface = int(value)
-            get_editor_interface() \
-                .edit_resource(_tool_set.get_surface(_current_surface))
+            _current_surface = 4
         _: print(action,": ", value)
 
 func _on_property_list_changed():
     _node.update_configuration_warnings()
     _tool_set = _node.tool_set
-    _bottom_panel.set_toolset(_tool_set)
     if not _tool_set.is_connected("changed", _node.redraw):
         _tool_set.connect("changed", _node.redraw)
 
 func _exit_tree():
     _diactivate_ui()
-    _bottom_panel.queue_free()
     _tool_buttons.queue_free()
     remove_custom_type("WormGround")
 
