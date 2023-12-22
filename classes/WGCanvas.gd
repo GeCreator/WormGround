@@ -14,12 +14,12 @@ static func create(base: RID) -> Array:
     result[DATA_CELLS] = []
     return result
 
-static func render(canvas_data: Array, texture: Texture2D):
+static func render(canvas_data: Array, texture: Texture2D, scale: Vector2):
     var canvas :RID = canvas_data[DATA_CANVAS]
     var cells :Array = canvas_data[DATA_CELLS]
     RenderingServer.canvas_item_clear(canvas)
     for c in cells:
-        _draw_surfaces(canvas, texture, c[WGCell.DATA_SURFACE])
+        _draw_surfaces(canvas, texture, scale, c[WGCell.DATA_SURFACE])
         
 
 static func render_debug(canvas_data: Array, physics: Dictionary):
@@ -30,19 +30,19 @@ static func render_debug(canvas_data: Array, physics: Dictionary):
         var shapes = WGPhysic.get_active_shapes(physics[id])
         # _draw_collision_shapes(canvas, shapes)
 
-static func _draw_surfaces(canvas: RID, surface: Texture2D, polygons: Array):
+static func _draw_surfaces(canvas: RID, texture: Texture2D, scale: Vector2, polygons: Array):
     var size := Vector2(
-        surface.get_image().get_width(),
-        surface.get_image().get_height()
+        texture.get_image().get_width(),
+        texture.get_image().get_height()
     )
-    var colors := PackedColorArray([Color.WHITE]) #surface.color
+    var colors := PackedColorArray([Color.WHITE])
     for polygon in polygons:
         var uvs: PackedVector2Array
         for p in polygon:
-            var a: Vector2 = p / size * Vector2.ONE #surface.scale
+            var a: Vector2 = p / size * scale
             uvs.append(a)
-        if surface:
-            RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs, surface)
+        if texture:
+            RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs, texture)
         else:
             RenderingServer.canvas_item_add_polygon(canvas, polygon, colors, uvs)
 

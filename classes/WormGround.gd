@@ -10,6 +10,11 @@ const DRAW_PER_FRAME: int = 10
     set(value):
         texture = value
 
+@export var texture_scale: Vector2 = Vector2.ONE:
+    set(value):
+        texture_scale = value
+        redraw()
+
 @export var level_data: WGLevelData:
     set(value):
         level_data = value
@@ -57,8 +62,8 @@ func remove_surface(shape: PackedVector2Array):
         WGCell.remove(cell, shape, _geometry)
     _cells_changed(cells)
 
-#func redraw():
-    #_canvas_render_list = _canvases.duplicate()
+func redraw():
+    _canvas_render_list = _canvases.duplicate()
 
 func _cells_changed(cells: Array):
     level_data.mark_as_modified()
@@ -130,7 +135,7 @@ func _process(_delta: float):
     for key in _canvas_render_list:
         remove_list.append(key)
         var canvas: Array = _canvas_render_list[key]
-        WGCanvas.render(canvas, texture)
+        WGCanvas.render(canvas, texture, texture_scale)
         WGCanvas.render_debug(canvas, _physics)
         limit -=1
         if limit<=0: break
