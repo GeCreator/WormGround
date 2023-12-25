@@ -89,11 +89,11 @@ func _get_global_mouse_position(screen_point: Vector2) -> Vector2:
 
 func _on_brush_draw(shape: PackedVector2Array):
     if not _is_in_edit_mode: return
-    _node.add_surface(_current_surface, shape)
+    _node.add(shape)
 
 func _on_brush_erase(shape: PackedVector2Array):
     if not _is_in_edit_mode: return
-    _node.remove_surface(shape)
+    _node.remove(shape)
 
 func _handles(object) -> bool:
     return _is_handle

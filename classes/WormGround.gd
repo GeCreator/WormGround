@@ -48,14 +48,14 @@ func _notification(what):
         if level_data!=null:
             level_data.save_changes(_cells)
 
-func add_surface(surface_id: int, shape: PackedVector2Array):
+func add(shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
     var cells: Array = _get_affected_cells(shape)
     for cell in cells:
         WGCell.add_surface(cell, shape, _geometry)
     _cells_changed(cells)
 
-func remove_surface(shape: PackedVector2Array):
+func remove(shape: PackedVector2Array):
     shape = _get_transformed_shape(shape)
     var cells: Array = _get_affected_cells(shape)
     for cell in cells:
