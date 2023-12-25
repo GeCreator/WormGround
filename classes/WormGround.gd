@@ -81,6 +81,7 @@ func _on_modified(cells) -> void:
         #WGPhysic.refresh(physic, cell, _geometry)
         if not _physics_update_list.has(id):
             _physics_update_list[id] = _get_physics(id)
+    set_physics_process(true)
 
 func _get_affected_cells(shape: PackedVector2Array) -> Array:
     var result: Array
@@ -132,7 +133,7 @@ func _get_transformed_shape(shape:PackedVector2Array) -> PackedVector2Array:
 
 func _process(_delta: float):
     # wait for physics update
-    # if _physics_update_list.size()>0: return
+    #if _physics_update_list.size()>0: return
     # update canvas
     var limit: int = DRAW_PER_FRAME
     var remove_list: PackedInt32Array
@@ -145,6 +146,8 @@ func _process(_delta: float):
         limit -=1
         if limit<=0: break
     for id in remove_list: _canvas_render_list.erase(id)
+    if limit == DRAW_PER_FRAME:
+        set_process(false)
 
 func _physics_process(delta):
     while _physics_update_list.size()>0:
@@ -153,6 +156,8 @@ func _physics_process(delta):
             WGPhysic.refresh(physic, _cells[id], _geometry)
             WGPhysic.update(physic, transform)
         _physics_update_list.clear()
+    set_physics_process(false)
+    set_process(true)
 
 func _get_configuration_warnings() -> PackedStringArray:
     var result: PackedStringArray
