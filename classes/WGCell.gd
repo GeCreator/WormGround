@@ -33,9 +33,8 @@ static func set_data(cell: Array, data: Array):
     for s in data[DATA_SURFACE]:
         n.append(s)
     cell[DATA_SURFACE] = n
-    
 
-static func add_surface(cell: Array, shape: PackedVector2Array, geometry: WGGeometry):
+static func add(cell: Array, shape: PackedVector2Array, geometry: WGGeometry):
     var new_parts = _get_cutted_polygons(shape, cell[DATA_COORDS])
     for p in new_parts:
         geometry.union(p, cell[DATA_SURFACE])

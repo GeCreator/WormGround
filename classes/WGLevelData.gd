@@ -1,14 +1,22 @@
 @tool
 class_name WGLevelData extends Resource
+signal modified(cells)
 
 ## This container store all surface data.
 var _data: String
-# Main data(extracted)
+# Main data size (extracted)
 var _data_size: int
+var _cells: Dictionary
+
+# modified flag(required when save)
 var _is_modified: bool = false
 
-func mark_as_modified():
+func get_cells_storage() -> Dictionary:
+    return _cells
+
+func mark_as_modified(cells) -> void:
     _is_modified = true
+    modified.emit(cells)
 
 func save_changes(cells: Dictionary):
     if not _is_modified: return
@@ -50,5 +58,10 @@ func _get_property_list():
             name = "_is_modified",
             type = TYPE_BOOL,
             usage = PROPERTY_USAGE_INTERNAL
-        }
+        },
+        {
+            name = "_cells",
+            type = TYPE_DICTIONARY,
+            usage = PROPERTY_USAGE_INTERNAL
+        },
     ]

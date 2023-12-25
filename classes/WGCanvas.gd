@@ -14,21 +14,21 @@ static func create(base: RID) -> Array:
     result[DATA_CELLS] = []
     return result
 
-static func render(canvas_data: Array, texture: Texture2D, scale: Vector2):
+static func render(cell: Array, canvas_data: Array, texture: Texture2D, scale: Vector2):
     var canvas :RID = canvas_data[DATA_CANVAS]
-    var cells :Array = canvas_data[DATA_CELLS]
+    #var cells :Array = canvas_data[DATA_CELLS]
     RenderingServer.canvas_item_clear(canvas)
-    for c in cells:
-        _draw_surfaces(canvas, texture, scale, c[WGCell.DATA_SURFACE])
+    #for c in cells:
+    _draw_surfaces(canvas, texture, scale, cell[WGCell.DATA_SURFACE])
         
 
-static func render_debug(canvas_data: Array, physics: Dictionary):
-    var cells :Array = canvas_data[DATA_CELLS]
+static func render_debug(canvas_data: Array, physics: Array):
+    #var cells :Array = canvas_data[DATA_CELLS]
     var canvas: RID = canvas_data[DATA_CANVAS]
-    for cell in cells:
-        var id = WGCell.get_id(cell)
-        var shapes = WGPhysic.get_active_shapes(physics[id])
-        # _draw_collision_shapes(canvas, shapes)
+    #for cell in cells:
+        #var id = WGCell.get_id(cell)
+    var shapes = WGPhysic.get_active_shapes(physics)
+    _draw_collision_shapes(canvas, shapes)
 
 static func _draw_surfaces(canvas: RID, texture: Texture2D, scale: Vector2, polygons: Array):
     var size := Vector2.ONE
