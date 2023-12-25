@@ -9,8 +9,7 @@ var _in_canvas: bool = false
 var _brush: WGBrush
 var _node: WormGround
 var _tool_buttons: HBoxContainer
-var _current_surface: int
-var _tool_set: WGToolSet
+
 
 func _enter_tree():
     _brush = WGBrush.new()
@@ -113,7 +112,6 @@ func _on_ui_action(action: String, value):
     match(action):
         "tool_brush":
             _is_in_edit_mode = true
-            _current_surface = 4
         _: print(action,": ", value)
 
 func _on_property_list_changed():
