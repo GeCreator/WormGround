@@ -4,11 +4,27 @@ class_name WGBorder
 static func render(canvas: Array, cell: Array, thickness: float, color: Color) -> void:
     var canvas_rid = canvas[WGCanvas.DATA_CANVAS]
     var shapes: Array[PackedVector2Array] = cell[WGCell.DATA_SURFACE]
+    var used_segments:= _create_used_segments(shapes)
     for shape in shapes:
-        var parts = _get_parts(shape.size(), _get_bad_segments(shape))
+        var parts = _get_parts(shape.size(), _get_bad_segments(shape, used_segments))
         for line in _make_polylines(shape, parts):
             RenderingServer.canvas_item_add_polyline(canvas_rid, line, PackedColorArray([color]), thickness)
 
+static func _create_used_segments(shapes: Array[PackedVector2Array]) -> Dictionary:
+    var result: Dictionary
+    for shape in shapes:
+        var size := shape.size()
+        for n in size:
+            var s:= _get_segment(n, shape, size)
+            if int(s[0].y)==int(s[1].y):
+                var key:= _used_segments_key(s[0])
+                if not result.has(key): result[key] = 0
+                result[key] += 1
+    return result
+
+static func _used_segments_key(a:Vector2) -> int:
+    return int(a.y)
+    
 static func _make_polylines(shape: PackedVector2Array, parts: Array) -> Array[PackedVector2Array]:
     
     var result :Array[PackedVector2Array]
@@ -18,24 +34,27 @@ static func _make_polylines(shape: PackedVector2Array, parts: Array) -> Array[Pa
         result.append(s)
     return result
 
-static func _get_bad_segments(shape: PackedVector2Array) -> PackedInt32Array:
+static func _get_bad_segments(shape: PackedVector2Array, used_segments: Dictionary) -> PackedInt32Array:
     var result: PackedInt32Array = []
     var size: int = shape.size()
     for n in size:
-        if _segment_on_border(_get_segment(n, shape, size)):
+        var segment:= _get_segment(n, shape, size)
+        if _segment_on_border(segment, used_segments):
             result.append(n)
     return result
 
-static func _segment_on_border(segment: PackedVector2Array) -> bool:
+static func _segment_on_border(segment: PackedVector2Array, used_segments: Dictionary) -> bool:
     var a: Vector2 = segment[0].posmod(WormGround.CELL_SIZE)
     var b: Vector2 = segment[1].posmod(WormGround.CELL_SIZE)
-    
+
     if int(a.x)==int(b.x):
         return int(a.x)==0
     if int(a.y)==int(b.y):
+        var key:=_used_segments_key(segment[0])
+        if used_segments.has(key) and used_segments[key]>1:
+            return true
         return int(a.y)==0
     return false
-
 
 ## return PackedVector2Array with 2 points of segment n
 static func _get_segment(n: int, polygon: PackedVector2Array, size: int) -> PackedVector2Array:
