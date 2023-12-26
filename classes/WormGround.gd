@@ -36,7 +36,6 @@ var _geometry: WGGeometry
 
 
 func _ready():
-    
     _geometry = WGGeometry.new( minimal_shape )
     if level_data!=null:
         level_data.connect("modified", _on_modified)
@@ -108,7 +107,6 @@ func _get_physics(id: int) -> Array:
     get_world_2d().space, layer, mask,\
     priority, transform)
     return _physics[id]
-
 
 func _get_canvas(id: int) -> Array:
     if not _canvases.has(id):
