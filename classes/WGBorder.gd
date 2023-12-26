@@ -1,6 +1,11 @@
 @tool
 class_name WGBorder
 
+static func render(canvas: Array, cell: Array, thickness: float, color: Color) -> void:
+    var canvas_rid = canvas[WGCanvas.DATA_CANVAS]
+    var shapes: Array[PackedVector2Array] = cell[WGCell.DATA_SURFACE]
+    for shape in shapes:
+        RenderingServer.canvas_item_add_polyline(canvas_rid, shape, PackedColorArray([color]), thickness)
 
 static func _get_parts(shape_size: int, bad_segments: Array) -> Array:
     var indexes = range(0,shape_size)

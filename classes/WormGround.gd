@@ -29,9 +29,18 @@ const DRAW_PER_FRAME: int = 10
 @export var priority: float = 1
 
 @export_subgroup("border")
-@export var border_enabled: bool = false
-@export var border_thickness: float = 1.0
-@export var border_color: Color = Color.WHITE
+@export var border_enabled: bool = false:
+    set(value):
+        border_enabled = value
+        redraw()
+@export var border_thickness: float = 1.0:
+    set(value):
+        border_thickness = value
+        redraw()
+@export var border_color: Color = Color.WHITE:
+    set(value):
+        border_color = value
+        redraw()
 
 var _cells: Dictionary
 var _canvases: Dictionary
@@ -137,7 +146,9 @@ func _process(_delta: float):
         remove_list.append(id)
         var canvas: Array = _canvas_render_list[id]
         WGCanvas.render(_cells[id], canvas, texture, texture_scale)
-        WGCanvas.render_debug(canvas, _physics[id])
+        if border_enabled:
+            WGBorder.render(canvas, _cells[id], border_thickness, border_color)
+        #WGCanvas.render_debug(canvas, _physics[id])
         
         limit -=1
         if limit<=0: break
