@@ -68,6 +68,7 @@ func remove(shape: PackedVector2Array):
 
 func redraw():
     _canvas_render_list = _canvases.duplicate()
+    set_physics_process(true)
 
 func _on_modified(cells) -> void:
     for cell in cells:
