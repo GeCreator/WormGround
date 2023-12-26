@@ -9,6 +9,7 @@ const DRAW_PER_FRAME: int = 10
 @export var texture: Texture2D:
     set(value):
         texture = value
+        redraw()
 
 @export var texture_scale: Vector2 = Vector2.ONE:
     set(value):
