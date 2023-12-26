@@ -24,6 +24,10 @@ const DRAW_PER_FRAME: int = 10
 @export var minimal_shape: float = 20.0
 
 @export_subgroup("collision")
+@export var debug_physics: bool = false:
+    set(value):
+        debug_physics = value
+        redraw()
 @export_flags_2d_physics var layer: int = 1
 @export_flags_2d_physics var mask: int = 1
 @export var priority: float = 1
@@ -146,9 +150,10 @@ func _process(_delta: float):
         remove_list.append(id)
         var canvas: Array = _canvas_render_list[id]
         WGCanvas.render(_cells[id], canvas, texture, texture_scale)
+        if debug_physics:
+            WGCanvas.render_debug(canvas, _physics[id])
         if border_enabled:
             WGBorder.render(canvas, _cells[id], border_thickness, border_color)
-        #WGCanvas.render_debug(canvas, _physics[id])
         
         limit -=1
         if limit<=0: break
