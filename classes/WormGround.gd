@@ -6,46 +6,35 @@ const CELL_SIZE: int = 200
 const DRAW_PER_FRAME: int = 10
 
 @export_category("WormGround")
-@export var texture: Texture2D:
-    set(value):
-        texture = value
-        redraw()
-
-@export var texture_scale: Vector2 = Vector2.ONE:
-    set(value):
-        texture_scale = value
-        redraw()
-
 @export var level_data: WGLevelData:
     set(value):
         level_data = value
         notify_property_list_changed() # required by plugin
+        redraw
 ## shape/hole size that will be skipped.
 ## Size is sum of polygon segments length
 @export var minimal_shape: float = 20.0
 
+@export_subgroup("texture")
+@export var texture: Texture2D:
+    set(value): texture = value; redraw()
+@export var texture_scale: Vector2 = Vector2.ONE:
+    set(value): texture_scale = value; redraw()
+
 @export_subgroup("collision")
 @export var debug_physics: bool = false:
-    set(value):
-        debug_physics = value
-        redraw()
+    set(value): debug_physics = value; redraw()
 @export_flags_2d_physics var layer: int = 1
 @export_flags_2d_physics var mask: int = 1
 @export var priority: float = 1
 
 @export_subgroup("border")
 @export var border_enabled: bool = false:
-    set(value):
-        border_enabled = value
-        redraw()
+    set(value): border_enabled = value; redraw()
 @export var border_thickness: float = 1.0:
-    set(value):
-        border_thickness = value
-        redraw()
+    set(value): border_thickness = value; redraw()
 @export var border_color: Color = Color.WHITE:
-    set(value):
-        border_color = value
-        redraw()
+    set(value): border_color = value; redraw()
 
 var _cells: Dictionary
 var _canvases: Dictionary
@@ -53,7 +42,6 @@ var _physics: Dictionary
 var _canvas_render_list: Dictionary = {}
 var _physics_update_list: Dictionary = {}
 var _geometry: WGGeometry
-
 
 func _ready():
     _geometry = WGGeometry.new( minimal_shape )
