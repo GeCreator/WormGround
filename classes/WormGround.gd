@@ -22,10 +22,16 @@ const DRAW_PER_FRAME: int = 10
 ## shape/hole size that will be skipped.
 ## Size is sum of polygon segments length
 @export var minimal_shape: float = 20.0
+
 @export_subgroup("collision")
 @export_flags_2d_physics var layer: int = 1
 @export_flags_2d_physics var mask: int = 1
 @export var priority: float = 1
+
+@export_subgroup("border")
+@export var border_enabled: bool = false
+@export var border_thickness: float = 1.0
+@export var border_color: Color = Color.WHITE
 
 var _cells: Dictionary
 var _canvases: Dictionary
