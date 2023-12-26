@@ -1,3 +1,4 @@
+@tool
 class_name WGBrush
 const MIN_SIZE: float = 5.0
 const MAX_SIZE: float = 500.0
